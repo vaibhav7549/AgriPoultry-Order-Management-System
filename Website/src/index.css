@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased transition-colors duration-300;
+  }
+}
+
+@layer components {
+  /* Global Micro-Interactions */
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-white dark:bg-primary-400 dark:hover:bg-primary-500 dark:text-gray-900 px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-500 hover:bg-amber-600 text-white dark:bg-secondary-400 dark:hover:bg-secondary-500 dark:text-gray-900 px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 dark:hover:-translate-y-0 dark:hover:border-primary-500/50 transition-all duration-300;
+  }
+
+  .input-base {
+    @apply bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition-all duration-200 outline-none;
+  }
+}
+
+@layer utilities {
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    @apply bg-slate-100 dark:bg-gray-800 rounded-full;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-gray-600 rounded-full hover:bg-slate-400 dark:hover:bg-gray-500 transition-colors;
+  }
+
+  .glassmorphism {
+    @apply bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl border border-white/20 dark:border-gray-700/30;
+  }
+}
+
+/* Base scrollbar applying to whole body */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-50 dark:bg-gray-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-gray-700 rounded-full border-2 border-slate-50 dark:border-gray-900;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300 dark:bg-gray-600;
+}
