@@ -1,117 +1,159 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Store, PackageSearch, Truck, IndianRupee, BellRing } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-const LIVE_FEED = [
-  { id: 1, time: '2 mins ago', message: 'Agro Distributors Ltd placed an order for 5000 Chicks', type: 'order' },
-  { id: 2, time: '15 mins ago', message: 'City Hatcheries order #BO-2002 updated to Processing', type: 'status' },
-  { id: 3, time: '1 hour ago', message: 'Payment of ₹220,000 received from Farm Connect', type: 'payment' },
-  { id: 4, time: '2 hours ago', message: 'Driver Ramesh dispatched for Route A shipments', type: 'logistics' },
-  { id: 5, time: '3 hours ago', message: 'New Distributor registered: Valley Supplies', type: 'system' },
-];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LIVE_FEED_EVENTS, MONTHLY_REVENUE, TOP_DISTRIBUTORS } from '../data/mockData';
 
 export default function CompanyDashboard() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  const [loading, setLoading] = useState(true);
+  const [feedIdx, setFeedIdx] = useState(0);
+  const [visibleFeeds, setVisibleFeeds] = useState(LIVE_FEED_EVENTS.slice(0, 6));
+  const feedRef = useRef(null);
+
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
+
+  // Auto-scroll live feed
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFeedIdx(prev => {
+        const next = (prev + 1) % LIVE_FEED_EVENTS.length;
+        const newItem = LIVE_FEED_EVENTS[next];
+        setVisibleFeeds(prevFeeds => [newItem, ...prevFeeds.slice(0, 7)]);
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
+  const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+
+  const feedDotColor = (type) => {
+    if (type === 'order') return 'bg-amber-400';
+    if (type === 'payment') return 'bg-green-500';
+    if (type === 'status') return 'bg-blue-400';
+    if (type === 'dispatch') return 'bg-gray-400';
+    return 'bg-gray-400';
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-16 skeleton w-1/3" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-28 skeleton" />)}
+        </div>
+        <div className="h-72 skeleton" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Master Control</h1>
-        <p className="text-slate-500 dark:text-gray-400">High-level overview of fulfillment operations and active network.</p>
+      <div>
+        <h1 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">Master Control</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">High-level overview of fulfillment operations and active network.</p>
       </div>
 
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
-      >
-        <motion.div variants={itemVariants} className="card p-6 flex items-center gap-4">
-          <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl text-indigo-600 dark:text-indigo-400">
-            <Store size={28} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-gray-400">Active Distributors</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">48</h3>
-          </div>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="card p-6 flex items-center gap-4">
-          <div className="p-4 bg-amber-50 dark:bg-amber-900/30 rounded-2xl text-amber-600 dark:text-amber-400">
-            <PackageSearch size={28} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-gray-400">Pending Bulk Orders</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">14</h3>
-          </div>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="card p-6 flex items-center gap-4">
-          <div className="p-4 bg-primary-50 dark:bg-primary-900/30 rounded-2xl text-primary-600 dark:text-primary-400">
-            <Truck size={28} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-gray-400">Units Shipped YTD</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">1.2M+</h3>
-          </div>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="card p-6 flex items-center gap-4">
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl text-emerald-600 dark:text-emerald-400">
-            <IndianRupee size={28} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-gray-400">Gross Revenue YTD</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">₹45.2M</h3>
-          </div>
-        </motion.div>
+      {/* Stat Cards */}
+      <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Active Distributors', value: '48', icon: <Store size={24} />, bg: 'bg-indigo-50 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400' },
+          { label: 'Pending Bulk Orders', value: '14', icon: <PackageSearch size={24} />, bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
+          { label: 'Units Shipped YTD', value: '1.2M+', icon: <Truck size={24} />, bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' },
+          { label: 'Gross Revenue YTD', value: '₹45.2M', icon: <IndianRupee size={24} />, bg: 'bg-green-50 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400' },
+        ].map((card, i) => (
+          <motion.div key={i} variants={itemVariants} className="card-static p-5 flex items-center gap-4">
+            <div className={`p-3 rounded-2xl ${card.bg} ${card.text}`}>{card.icon}</div>
+            <div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.label}</p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{card.value}</h3>
+            </div>
+          </motion.div>
+        ))}
       </motion.div>
 
-      {/* Live Fulfillment Feed */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="card overflow-hidden"
-      >
-        <div className="p-4 bg-slate-50 dark:bg-gray-800/80 border-b border-slate-200 dark:border-gray-700 flex items-center gap-3">
-          <BellRing className="text-primary-500 animate-pulse" size={20} />
-          <h2 className="font-bold text-slate-900 dark:text-white flex-1">Live Operation Feed</h2>
-          <span className="flex h-3 w-3 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+      {/* Live Feed */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="card-static overflow-hidden">
+        <div className="p-4 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3">
+          <BellRing className="text-green-500 animate-pulse" size={18} />
+          <h2 className="font-heading font-semibold text-gray-900 dark:text-white flex-1">Live Operation Feed</h2>
+          <span className="flex h-2.5 w-2.5 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
           </span>
         </div>
-        
-        <div className="relative h-[300px] overflow-hidden bg-white dark:bg-gray-800">
-          {/* Fading borders for continuous scroll effect visually */}
-          <div className="absolute top-0 w-full h-8 bg-gradient-to-b from-white dark:from-gray-800 to-transparent z-10 pointers-events-none" />
-          <div className="absolute bottom-0 w-full h-8 bg-gradient-to-t from-white dark:from-gray-800 to-transparent z-10 pointers-events-none" />
-          
-          <div className="p-6 h-full overflow-y-auto scrollbar-custom space-y-4">
-            {LIVE_FEED.map((feed) => (
-              <div key={feed.id} className="flex gap-4 items-start relative before:absolute before:left-2 before:top-8 before:bottom-[-24px] before:w-[2px] before:bg-slate-100 dark:before:bg-gray-700 last:before:hidden">
-                <div className="relative z-10 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 mt-1 shadow-sm shrink-0
-                  ${feed.type === 'order' ? 'bg-amber-400' : feed.type === 'payment' ? 'bg-green-500' : feed.type === 'status' ? 'bg-blue-400' : 'bg-slate-400'}
-                " style={{
-                  backgroundColor: feed.type === 'order' ? '#FBBF24' : feed.type === 'payment' ? '#10B981' : feed.type === 'status' ? '#60A5FA' : '#94A3B8'
-                }} />
+        <div ref={feedRef} className="relative h-72 overflow-hidden bg-white dark:bg-gray-800">
+          <div className="absolute top-0 w-full h-6 bg-gradient-to-b from-white dark:from-gray-800 to-transparent z-10" />
+          <div className="absolute bottom-0 w-full h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent z-10" />
+          <div className="p-4 h-full overflow-y-auto scrollbar-custom space-y-3">
+            {visibleFeeds.map((feed, i) => (
+              <motion.div key={`${feed.id}-${i}`} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-3 items-start">
+                <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${feedDotColor(feed.type)}`} />
                 <div>
-                  <p className="font-medium text-slate-800 dark:text-gray-200">{feed.message}</p>
-                  <span className="text-xs font-semibold text-slate-400 dark:text-gray-500">{feed.time}</span>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{feed.message}</p>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{feed.time}</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
-            <div className="text-center text-sm text-slate-400 dark:text-gray-600 pt-4">End of recent activity</div>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="card-static p-5">
+          <h2 className="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-4">Revenue by Month</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={MONTHLY_REVENUE} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={v => `₹${(v / 1000000).toFixed(0)}M`} />
+                <Tooltip formatter={v => [`₹${(v / 100000).toFixed(1)}L`, 'Revenue']} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <Bar dataKey="revenue" fill="#16a34a" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="card-static p-5">
+          <h2 className="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-4">Top Distributors by Volume</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={TOP_DISTRIBUTORS} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} width={80} />
+                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <Bar dataKey="volume" fill="#16a34a" radius={[0, 6, 6, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Decorative Map */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="card-static p-5">
+        <h2 className="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-4">Distributor Network — Maharashtra</h2>
+        <div className="relative h-64 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-700 rounded-xl overflow-hidden flex items-center justify-center">
+          <svg viewBox="0 0 400 300" className="w-full h-full max-w-md opacity-30 dark:opacity-20" fill="none" stroke="currentColor" strokeWidth="1" className="text-green-600">
+            <path d="M120,80 Q160,40 220,60 Q280,80 300,120 Q320,170 280,220 Q240,260 180,250 Q120,240 100,200 Q80,160 100,120 Q110,90 120,80 Z" fill="currentColor" opacity="0.1" stroke="currentColor" />
+          </svg>
+          {/* City dots */}
+          {[
+            { name: 'Mumbai', x: '30%', y: '55%' },
+            { name: 'Pune', x: '42%', y: '60%' },
+            { name: 'Nashik', x: '38%', y: '35%' },
+            { name: 'Kolhapur', x: '35%', y: '80%' },
+            { name: 'Sangli', x: '48%', y: '78%' },
+            { name: 'Aurangabad', x: '55%', y: '40%' },
+          ].map(city => (
+            <div key={city.name} className="absolute flex flex-col items-center" style={{ left: city.x, top: city.y }}>
+              <div className="w-3 h-3 bg-green-500 rounded-full shadow-lg shadow-green-500/40 animate-pulse" />
+              <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 mt-1">{city.name}</span>
+            </div>
+          ))}
         </div>
       </motion.div>
     </div>

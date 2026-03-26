@@ -1,147 +1,194 @@
-import React, { useState } from 'react';
-import { Edit3, CheckCircle2, RotateCcw } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { useStore } from '../lib/store';
+import { useToast } from '../context/ToastContext';
+import { Edit3, Plus, Save, X, AlertTriangle, History, Package } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { formatCurrencyFull } from '../utils/helpers';
 
-const INITIAL_PRODUCTS = [
-  { id: 'p1', name: 'Starter Feed', companyPrice: 1000, distPrice: 1200, img: '🌾', stock: 'High' },
-  { id: 'p2', name: 'Finisher Feed', companyPrice: 1300, distPrice: 1500, img: '🌾', stock: 'Medium' },
-  { id: 'p3', name: 'Broiler Chicks', companyPrice: 32, distPrice: 40, img: '🐣', stock: 'Low' },
-  { id: 'p4', name: 'Layer Chicks', companyPrice: 40, distPrice: 50, img: '🐥', stock: 'High' },
-];
+const EMOJIS = ['🌾', '🐣', '🐥', '🌿', '💉', '🥚', '🐔', '🌽', '🥜', '🧪', '📦', '🏥'];
 
 export default function ProductMaster() {
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [flippedCards, setFlippedCards] = useState({});
+  const { products, updateProduct, addProduct } = useStore();
+  const { addToast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(null);
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', unit: 'bags', basePrice: '', distPrice: '', stock: 'Medium', emoji: '📦', minOrder: '', category: 'Feed' });
 
-  const toggleFlip = (id) => {
-    setFlippedCards(prev => ({ ...prev, [id]: !prev[id] }));
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
+
+  const startEdit = (product) => { setEditingId(product.id); setEditForm({ basePrice: product.basePrice, distPrice: product.distPrice, stock: product.stock, minOrder: product.minOrder }); };
+
+  const saveEdit = () => {
+    updateProduct(editingId, { basePrice: Number(editForm.basePrice), distPrice: Number(editForm.distPrice), stock: editForm.stock, minOrder: Number(editForm.minOrder) });
+    addToast('Pricing updated and synced to distributors', 'success');
+    setEditingId(null);
   };
 
-  const handlePriceUpdate = (id, newCompany, newDist) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, companyPrice: newCompany, distPrice: newDist } : p));
-    toggleFlip(id);
-    
-    // Simulate notification
-    alert('Simulated Notification: Pricing updated. Push notification sent to all active Distributors.');
+  const handleAddProduct = (e) => {
+    e.preventDefault();
+    addProduct({ ...newProduct, basePrice: Number(newProduct.basePrice), distPrice: Number(newProduct.distPrice), minOrder: Number(newProduct.minOrder) });
+    addToast('New product added successfully', 'success');
+    setShowAddModal(false);
+    setNewProduct({ name: '', description: '', unit: 'bags', basePrice: '', distPrice: '', stock: 'Medium', emoji: '📦', minOrder: '', category: 'Feed' });
   };
+
+  const lowStockProducts = products.filter(p => p.stock === 'Low');
+
+  if (loading) return <div className="space-y-4"><div className="h-12 skeleton w-1/3" /><div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-64 skeleton" />)}</div></div>;
 
   return (
     <div className="space-y-6">
-      <div className="mb-6 flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Product & Price Master</h1>
-          <p className="text-slate-500 dark:text-gray-400">Manage base inventory pricing. Updates dynamically sync to distributors.</p>
+          <h1 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">Product & Price Master</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Manage base inventory pricing. Updates sync to distributors.</p>
         </div>
+        <button onClick={() => setShowAddModal(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Product</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 perspective-1000">
-        {products.map(product => {
-          const isFlipped = !!flippedCards[product.id];
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Product Grid */}
+        <div className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            {products.map(product => {
+              const isEditing = editingId === product.id;
+              const margin = product.basePrice > 0 ? Math.round(((product.distPrice - product.basePrice) / product.basePrice) * 100) : 0;
 
-          return (
-            <div key={product.id} className="relative h-80 w-full group perspective" style={{ perspective: '1000px' }}>
-              <motion.div
-                className="w-full h-full relative preserve-3d transition-all duration-500"
-                style={{ transformStyle: 'preserve-3d' }}
-                animate={{ rotateY: isFlipped ? 180 : 0 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              >
-                
-                {/* Front Side */}
-                <div className="absolute inset-0 backface-hidden w-full h-full card p-6 flex flex-col justify-between" style={{ backfaceVisibility: 'hidden' }}>
-                  <div className="flex justify-between items-start">
-                    <div className="text-5xl filter drop-shadow-sm">{product.img}</div>
-                    <span className={`px-2 py-1 text-xs font-bold rounded-md ${product.stock === 'High' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : product.stock === 'Medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                      Stock: {product.stock}
-                    </span>
-                  </div>
-                  
-                  <div className="text-center mt-4 flex-1 flex items-center justify-center">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{product.name}</h3>
-                  </div>
-
-                  <div className="space-y-2 mb-4 bg-slate-50 dark:bg-gray-900/50 p-3 rounded-lg border border-slate-100 dark:border-gray-700">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Base Price:</span>
-                      <span className="font-bold text-primary-600 dark:text-primary-400">₹{product.companyPrice}</span>
+              return (
+                <div key={product.id} className="card-static p-4 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="text-3xl">{product.emoji}</div>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${product.stock === 'High' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : product.stock === 'Medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        {product.stock}
+                      </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Sugg. Dist Price:</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">₹{product.distPrice}</span>
-                    </div>
-                  </div>
+                    <h3 className="font-bold text-gray-900 dark:text-white text-lg">{product.name}</h3>
 
-                  <button 
-                    onClick={() => toggleFlip(product.id)}
-                    className="w-full flex items-center justify-center gap-2 py-2 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800/50 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors font-medium text-sm"
-                  >
-                    <Edit3 size={16} /> Edit Pricing
-                  </button>
+                    {isEditing ? (
+                      <div className="space-y-2 mt-3">
+                        <div><label className="text-xs text-gray-500">Base Price (₹)</label>
+                          <input type="number" value={editForm.basePrice} onChange={e => setEditForm(f => ({ ...f, basePrice: e.target.value }))} className="input-base text-sm py-1.5" /></div>
+                        <div><label className="text-xs text-gray-500">Dist Price (₹)</label>
+                          <input type="number" value={editForm.distPrice} onChange={e => setEditForm(f => ({ ...f, distPrice: e.target.value }))} className="input-base text-sm py-1.5" /></div>
+                        {editForm.basePrice > 0 && editForm.distPrice > 0 && (
+                          <p className="text-xs text-green-600 font-medium">{Math.round(((editForm.distPrice - editForm.basePrice) / editForm.basePrice) * 100)}% margin</p>
+                        )}
+                        <div><label className="text-xs text-gray-500">Stock Level</label>
+                          <select value={editForm.stock} onChange={e => setEditForm(f => ({ ...f, stock: e.target.value }))} className="input-base text-sm py-1.5">
+                            <option>High</option><option>Medium</option><option>Low</option>
+                          </select></div>
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={() => setEditingId(null)} className="flex-1 btn-outline text-sm py-1.5"><X size={14} className="inline mr-1" />Cancel</button>
+                          <button onClick={saveEdit} className="flex-1 btn-primary text-sm py-1.5"><Save size={14} className="inline mr-1" />Save</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-1.5 mt-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2.5">
+                          <div className="flex justify-between text-sm"><span className="text-gray-500">Base Price</span><span className="font-bold text-green-600">{formatCurrencyFull(product.basePrice)}</span></div>
+                          <div className="flex justify-between text-sm"><span className="text-gray-500">Sugg. Dist</span><span className="font-bold text-gray-700 dark:text-gray-200">{formatCurrencyFull(product.distPrice)}</span></div>
+                          <div className="text-xs text-green-600 font-medium">{margin}% margin</div>
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                          <button onClick={() => startEdit(product)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-sm text-green-600 border border-green-200 rounded-lg hover:bg-green-50 font-medium transition-colors"><Edit3 size={14} /> Edit</button>
+                          <button onClick={() => setShowHistory(product)} className="px-2 py-1.5 text-gray-400 hover:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors"><History size={14} /></button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
 
-                {/* Back Side (Edit Form) */}
-                <div className="absolute inset-0 backface-hidden w-full h-full card p-6 flex flex-col justify-between" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      {product.img} Edit {product.name}
-                    </h3>
+        {/* Inventory Alerts */}
+        {lowStockProducts.length > 0 && (
+          <div className="lg:w-64 shrink-0">
+            <div className="card-static p-4 sticky top-4">
+              <div className="flex items-center gap-2 mb-3"><AlertTriangle size={16} className="text-red-500" /><h3 className="font-heading font-semibold text-gray-900 dark:text-white text-sm">Low Stock Alerts</h3></div>
+              <div className="space-y-2">
+                {lowStockProducts.map(p => (
+                  <div key={p.id} className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800">
+                    <p className="text-sm font-medium text-red-700 dark:text-red-400">{p.emoji} {p.name}</p>
+                    <button className="text-xs text-red-600 font-medium hover:underline mt-1">Restock</button>
                   </div>
-
-                  <form 
-                    className="flex-1 space-y-4"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handlePriceUpdate(
-                         product.id, 
-                         e.target.elements.companyPrice.value, 
-                         e.target.elements.distPrice.value
-                      );
-                    }}
-                  >
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 mb-1">Company Base Price (₹)</label>
-                      <input 
-                        type="number" 
-                        name="companyPrice"
-                        defaultValue={product.companyPrice} 
-                        className="input-base py-1.5 text-sm" 
-                        required 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-500 dark:text-gray-400 mb-1">Suggested Dist Price (₹)</label>
-                      <input 
-                        type="number" 
-                        name="distPrice"
-                        defaultValue={product.distPrice} 
-                        className="input-base py-1.5 text-sm" 
-                        required 
-                      />
-                    </div>
-                    
-                    <div className="pt-2 flex gap-2">
-                      <button 
-                        type="button"
-                        onClick={() => toggleFlip(product.id)}
-                        className="flex-1 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex justify-center items-center"
-                      >
-                        <RotateCcw size={18} />
-                      </button>
-                      <button 
-                        type="submit"
-                        className="flex-[3] btn-primary py-2 flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle2 size={16} /> Update
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-              </motion.div>
+                ))}
+              </div>
             </div>
-          );
-        })}
+          </div>
+        )}
       </div>
+
+      {/* Add Product Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto scrollbar-custom">
+              <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="font-heading font-bold text-gray-900 dark:text-white">Add New Product</h3>
+                <button onClick={() => setShowAddModal(false)} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+              </div>
+              <form onSubmit={handleAddProduct} className="p-5 space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Emoji</label>
+                  <div className="flex flex-wrap gap-2">
+                    {EMOJIS.map(e => (
+                      <button key={e} type="button" onClick={() => setNewProduct(p => ({ ...p, emoji: e }))} className={`text-xl p-1.5 rounded-lg border-2 transition-all ${newProduct.emoji === e ? 'border-green-500 bg-green-50' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'}`}>{e}</button>
+                    ))}
+                  </div>
+                </div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Name</label><input required value={newProduct.name} onChange={e => setNewProduct(p => ({ ...p, name: e.target.value }))} className="input-base text-sm" /></div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Description</label><input value={newProduct.description} onChange={e => setNewProduct(p => ({ ...p, description: e.target.value }))} className="input-base text-sm" /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Category</label><select value={newProduct.category} onChange={e => setNewProduct(p => ({ ...p, category: e.target.value }))} className="input-base text-sm"><option>Feed</option><option>Chicks</option><option>Healthcare</option></select></div>
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Unit</label><select value={newProduct.unit} onChange={e => setNewProduct(p => ({ ...p, unit: e.target.value }))} className="input-base text-sm"><option value="bags">Bags</option><option value="chicks">Chicks</option><option value="packs">Packs</option></select></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Base Price (₹)</label><input required type="number" value={newProduct.basePrice} onChange={e => setNewProduct(p => ({ ...p, basePrice: e.target.value }))} className="input-base text-sm" /></div>
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Dist Price (₹)</label><input required type="number" value={newProduct.distPrice} onChange={e => setNewProduct(p => ({ ...p, distPrice: e.target.value }))} className="input-base text-sm" /></div>
+                </div>
+                {newProduct.basePrice > 0 && newProduct.distPrice > 0 && <p className="text-sm text-green-600 font-medium">{Math.round(((newProduct.distPrice - newProduct.basePrice) / newProduct.basePrice) * 100)}% above base</p>}
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Stock</label><select value={newProduct.stock} onChange={e => setNewProduct(p => ({ ...p, stock: e.target.value }))} className="input-base text-sm"><option>High</option><option>Medium</option><option>Low</option></select></div>
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Min Order</label><input type="number" value={newProduct.minOrder} onChange={e => setNewProduct(p => ({ ...p, minOrder: e.target.value }))} className="input-base text-sm" /></div>
+                </div>
+                <button type="submit" className="w-full btn-primary py-2.5 mt-2">Add Product</button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Price History Modal */}
+      <AnimatePresence>
+        {showHistory && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full">
+              <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="font-heading font-bold text-gray-900 dark:text-white">Price History — {showHistory.name}</h3>
+                <button onClick={() => setShowHistory(null)} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+              </div>
+              <div className="p-5 space-y-2">
+                {[
+                  { date: '15 Mar 2026', base: showHistory.basePrice, dist: showHistory.distPrice },
+                  { date: '01 Mar 2026', base: Math.round(showHistory.basePrice * 0.95), dist: Math.round(showHistory.distPrice * 0.95) },
+                  { date: '15 Feb 2026', base: Math.round(showHistory.basePrice * 0.9), dist: Math.round(showHistory.distPrice * 0.9) },
+                ].map((h, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
+                    <span className="text-gray-500">{h.date}</span>
+                    <span className="text-gray-800 dark:text-gray-200 font-medium">{formatCurrencyFull(h.base)} / {formatCurrencyFull(h.dist)}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

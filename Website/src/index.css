@@ -4,26 +4,63 @@
 
 @layer base {
   body {
-    @apply antialiased transition-colors duration-300;
+    @apply antialiased transition-colors duration-300 font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'DM Sans', system-ui, sans-serif;
   }
 }
 
 @layer components {
-  /* Global Micro-Interactions */
   .btn-primary {
-    @apply bg-primary-500 hover:bg-primary-600 text-white dark:bg-primary-400 dark:hover:bg-primary-500 dark:text-gray-900 px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-primary-600 hover:bg-primary-700 text-white dark:bg-primary-500 dark:hover:bg-primary-600 dark:text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply bg-secondary-500 hover:bg-amber-600 text-white dark:bg-secondary-400 dark:hover:bg-secondary-500 dark:text-gray-900 px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all duration-200;
+    @apply bg-secondary-500 hover:bg-secondary-600 text-white dark:bg-secondary-400 dark:hover:bg-secondary-500 dark:text-gray-900 px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md active:scale-[0.97] transition-all duration-200;
+  }
+
+  .btn-outline {
+    @apply bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200;
   }
 
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-slate-100 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1 dark:hover:-translate-y-0 dark:hover:border-primary-500/50 transition-all duration-300;
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-200;
+  }
+
+  .card-static {
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700;
   }
 
   .input-base {
     @apply bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 transition-all duration-200 outline-none;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-pending {
+    @apply bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800;
+  }
+  .badge-fulfilled, .badge-delivered {
+    @apply bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800;
+  }
+  .badge-processing {
+    @apply bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800;
+  }
+  .badge-shipped {
+    @apply bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800;
+  }
+  .badge-cancelled, .badge-overdue {
+    @apply bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800;
+  }
+  .badge-new {
+    @apply bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800;
   }
 }
 
@@ -32,34 +69,47 @@
     width: 6px;
     height: 6px;
   }
-
   .scrollbar-custom::-webkit-scrollbar-track {
     @apply bg-slate-100 dark:bg-gray-800 rounded-full;
   }
-
   .scrollbar-custom::-webkit-scrollbar-thumb {
     @apply bg-slate-300 dark:bg-gray-600 rounded-full hover:bg-slate-400 dark:hover:bg-gray-500 transition-colors;
   }
-
   .glassmorphism {
     @apply bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl border border-white/20 dark:border-gray-700/30;
   }
 }
 
-/* Base scrollbar applying to whole body */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+/* Base scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { @apply bg-slate-50 dark:bg-gray-900; }
+::-webkit-scrollbar-thumb { @apply bg-slate-200 dark:bg-gray-700 rounded-full border-2 border-slate-50 dark:border-gray-900; }
+::-webkit-scrollbar-thumb:hover { @apply bg-slate-300 dark:bg-gray-600; }
 
-::-webkit-scrollbar-track {
-  @apply bg-slate-50 dark:bg-gray-900;
+/* Toast animations */
+@keyframes toast-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
-
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 dark:bg-gray-700 rounded-full border-2 border-slate-50 dark:border-gray-900;
+@keyframes toast-out {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
 }
+.toast-enter { animation: toast-in 0.3s ease-out; }
+.toast-exit { animation: toast-out 0.3s ease-in forwards; }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-300 dark:bg-gray-600;
+/* Skeleton animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+.dark .skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+  background-size: 200% 100%;
 }
