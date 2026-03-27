@@ -2,7 +2,7 @@
 
 A digital platform to simplify and automate the ordering process of poultry feed and chicks between farmers, distributors, and companies.
 
-Farmers place orders through a **mobile app** (Flutter) and a **web portal**, distributors manage and combine those orders into bulk purchases, and companies process and deliver products — all in one centralized system. A **web dashboard** (React) provides farmers, distributors, and companies with real-time analytics, order management, and financial tracking. The platform also handles multi-level pricing and tracks distributor profit automatically.
+Farmers, distributors, and companies process and deliver products — all in one centralized system. A **web dashboard** (React) provides everyone with real-time analytics, order management, and financial tracking. The platform also handles multi-level pricing and tracks distributor profit automatically.
 
 ---
 
@@ -28,7 +28,7 @@ Farmers place orders through a **mobile app** (Flutter) and a **web portal**, di
 
 | Module | Highlights |
 |--------|-----------|
-| **Farmer App / Portal** | Place orders, view order history, make payments, dynamic pricing |
+| **Farmer Portal** | Place orders, view order history, make payments, dynamic pricing |
 | **Distributor Dashboard** | Manage farmer orders, bulk purchasing, inventory & ledger, margin tracking |
 | **Company Dashboard** | Process distributor orders, product catalog, financial tracking, live feed |
 | **Database** | Multi-level pricing (distributor & farmer), payment tracking, ledger system |
@@ -39,11 +39,10 @@ Farmers place orders through a **mobile app** (Flutter) and a **web portal**, di
 
 | Layer | Technology |
 |-------|-----------|
-| **Mobile App** | Flutter 3.x · Dart · Riverpod · GoRouter |
 | **Web Dashboard** | React 19 · Vite 8 · Tailwind CSS 3 · Zustand |
 | **Charts** | Recharts |
-| **Animations** | Framer Motion · Flutter Animate |
-| **Icons** | Lucide React · Cupertino Icons |
+| **Animations** | Framer Motion |
+| **Icons** | Lucide React |
 | **Database** | MySQL 8.x |
 
 ---
@@ -52,11 +51,6 @@ Farmers place orders through a **mobile app** (Flutter) and a **web portal**, di
 
 ```
 AgriPoultry-Order-Management-System/
-├── App/                  # Flutter mobile application
-│   ├── lib/              # Dart source code
-│   ├── android/           # Android-specific config
-│   ├── ios/               # iOS-specific config
-│   └── pubspec.yaml       # Flutter dependencies
 ├── Website/              # React web dashboard
 │   ├── src/
 │   │   ├── components/   # Reusable UI components
@@ -82,7 +76,6 @@ Make sure you have the following installed on your system:
 |------|---------|----------|
 | **Node.js** | v18+ | [nodejs.org](https://nodejs.org/) |
 | **npm** | v9+ | Comes with Node.js |
-| **Flutter SDK** | 3.x | [flutter.dev](https://docs.flutter.dev/get-started/install) |
 | **MySQL** | 8.x | [mysql.com](https://dev.mysql.com/downloads/) |
 | **Git** | Latest | [git-scm.com](https://git-scm.com/) |
 
@@ -140,29 +133,6 @@ npm run preview
 # Run linter
 npm run lint
 ```
-
----
-
-### 4. Mobile App (Flutter)
-
-```bash
-# Navigate to the App directory
-cd App
-
-# Get Flutter dependencies
-flutter pub get
-
-# Run on a connected device or emulator
-flutter run
-```
-
-#### Build APK for Android
-
-```bash
-flutter build apk --release
-```
-
-> **Tip:** Make sure you have an Android emulator running or a physical device connected. Run `flutter devices` to check available devices.
 
 ---
 
