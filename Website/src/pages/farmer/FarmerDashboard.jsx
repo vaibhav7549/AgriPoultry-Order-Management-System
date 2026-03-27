@@ -20,7 +20,7 @@ export default function FarmerDashboard() {
   const myOrders = farmerPortalOrders || [];
   
   const pendingCount = myOrders.filter(o => o.status === 'Pending' || o.status === 'Processing').length;
-  const fulfilledCount = myOrders.filter(o => o.status === 'Delivered').length;
+  const deliveredCount = myOrders.filter(o => o.status === 'Delivered').length;
   const totalSpent = myOrders.reduce((acc, o) => acc + o.totalValue, 0);
 
   const myDistributor = DISTRIBUTORS.find(d => d.id === currentUser?.assignedDistributorId) || DISTRIBUTORS[0];
@@ -60,7 +60,7 @@ export default function FarmerDashboard() {
 
       {/* Stat Cards */}
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/farmer/my-orders')} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
@@ -71,7 +71,7 @@ export default function FarmerDashboard() {
           <div className="mt-3"><button onClick={() => navigate('/farmer/my-orders')} className="text-blue-500 font-semibold text-sm hover:underline">View History</button></div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/farmer/my-orders', { state: { statusFilter: 'Pending' } })} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Orders</p>
@@ -82,18 +82,18 @@ export default function FarmerDashboard() {
           <div className="mt-3"><span className="text-amber-500 font-semibold text-sm">Awaiting delivery</span></div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/farmer/my-orders', { state: { statusFilter: 'Delivered' } })} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Delivered</p>
-              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{fulfilledCount}</h3>
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{deliveredCount}</h3>
             </div>
             <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400"><PackageCheck size={22} /></div>
           </div>
           <div className="mt-3"><span className="text-green-600 font-semibold text-sm">Completed</span></div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/farmer/my-orders')} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Spent</p>

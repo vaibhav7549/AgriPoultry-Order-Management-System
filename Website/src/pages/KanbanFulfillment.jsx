@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useStore } from '../lib/store';
 import { useToast } from '../context/ToastContext';
-import { Package, MoreVertical, ChevronDown, ChevronUp, X, Eye, ArrowRight, Phone, Clock, CheckCircle, Truck, Search } from 'lucide-react';
+import { Package, MoreVertical, ChevronDown, ChevronUp, X, Eye, ArrowRight, Download, Phone, Clock, CheckCircle, Truck, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrencyFull, formatDate, getStatusColor } from '../utils/helpers';
+import { exportToCSV } from '../utils/exportUtils';
 
 const COLUMNS = [
   { key: 'New Orders', color: 'bg-blue-500', label: 'New Orders' },
   { key: 'Processing', color: 'bg-amber-500', label: 'Processing' },
   { key: 'Shipped', color: 'bg-purple-500', label: 'Shipped' },
   { key: 'Delivered', color: 'bg-green-500', label: 'Delivered' },
+  { key: 'Rejected', color: 'bg-red-500', label: 'Rejected' },
 ];
 
 export default function KanbanFulfillment() {
@@ -20,6 +22,7 @@ export default function KanbanFulfillment() {
   const [viewOrder, setViewOrder] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
   const [filterDist, setFilterDist] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
@@ -41,9 +44,25 @@ export default function KanbanFulfillment() {
     setMenuOpen(null);
   };
 
+  const handleExport = () => {
+    const exportData = kanbanOrders.map(o => ({
+      'Order ID': o.id,
+      Distributor: o.distributorName,
+      Amount: o.totalValue,
+      Items: o.items?.length || 0,
+      Status: o.status,
+      Date: o.date
+    }));
+    exportToCSV(exportData, 'AgriPoultry_Fulfillment_Orders');
+  };
+
   const uniqueDistributors = [...new Set(kanbanOrders.map(o => o.distributorName))];
 
-  const filteredOrders = filterDist === 'All' ? kanbanOrders : kanbanOrders.filter(o => o.distributorName === filterDist);
+  const filteredOrders = kanbanOrders.filter(o => {
+    const matchDist = filterDist === 'All' || o.distributorName === filterDist;
+    const matchSearch = !searchTerm || o.distributorName.toLowerCase().includes(searchTerm.toLowerCase()) || o.id.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchDist && matchSearch;
+  });
   const ordersByStatus = COLUMNS.reduce((acc, col) => {
     acc[col.key] = filteredOrders.filter(o => o.status === col.key);
     return acc;
@@ -65,10 +84,17 @@ export default function KanbanFulfillment() {
           <h1 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">Bulk Order Fulfillment</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Drag and drop orders to update fulfillment status</p>
         </div>
-        <select value={filterDist} onChange={e => setFilterDist(e.target.value)} className="input-base w-auto text-sm py-2">
-          <option value="All">All Distributors</option>
-          {uniqueDistributors.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search order ID or dist..." className="pl-8 pr-3 py-2 input-base text-sm w-48 sm:w-64" />
+          </div>
+          <select value={filterDist} onChange={e => setFilterDist(e.target.value)} className="input-base w-auto text-sm py-2">
+            <option value="All">All Distributors</option>
+            {uniqueDistributors.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <button onClick={handleExport} className="btn-outline flex items-center gap-1 text-sm py-2"><Download size={14} /> Export</button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4 scrollbar-custom">
@@ -101,7 +127,8 @@ export default function KanbanFulfillment() {
                                   {menuOpen === order.id && (
                                     <div className="absolute right-0 top-6 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-20 py-1 w-40">
                                       <button onClick={() => { setViewOrder(order); setMenuOpen(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"><Eye size={12} /> View Details</button>
-                                      {col.key !== 'Delivered' && <button onClick={() => moveToNext(order.id, col.key)} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-green-600 hover:bg-green-50"><ArrowRight size={12} /> Move Next</button>}
+                                      {col.key !== 'Delivered' && col.key !== 'Rejected' && <button onClick={() => moveToNext(order.id, col.key)} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-green-600 hover:bg-green-50"><ArrowRight size={12} /> Move Next</button>}
+                                      {col.key !== 'Rejected' && col.key !== 'Delivered' && <button onClick={() => { moveKanbanOrder(order.id, 'Rejected'); setMenuOpen(null); }} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"><X size={12} /> Reject</button>}
                                       <button onClick={() => setMenuOpen(null)} className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50"><Phone size={12} /> Contact</button>
                                     </div>
                                   )}

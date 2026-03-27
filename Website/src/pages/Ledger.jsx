@@ -4,12 +4,15 @@ import { IndianRupee, TrendingUp, ArrowDownLeft, ArrowUpRight, Calendar, Downloa
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { motion } from 'framer-motion';
 import { formatCurrencyFull, formatDate, getStatusColor } from '../utils/helpers';
+import { exportToCSV } from '../utils/exportUtils';
 import { MONTHLY_PROFIT, INVOICES } from '../data/mockData';
 
 export default function Ledger() {
   const transactions = useStore(s => s.transactions);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('transactions');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('All');
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
@@ -21,6 +24,23 @@ export default function Ledger() {
     { key: 'invoices', label: 'Invoices' },
   ];
 
+  const handleExport = () => {
+    const exportData = transactions.map(t => ({
+      Date: t.date,
+      Description: t.description,
+      Credit: t.credit || 0,
+      Debit: t.debit || 0,
+      Balance: t.balance
+    }));
+    exportToCSV(exportData, 'My_Ledger');
+  };
+
+  const filteredTransactions = transactions.filter(t => {
+    const sMatch = !searchTerm || t.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const tMatch = typeFilter === 'All' || t.type === typeFilter;
+    return sMatch && tMatch;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -28,7 +48,7 @@ export default function Ledger() {
           <h1 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">My Ledger</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Track your revenue, payments, and profit</p>
         </div>
-        <button className="btn-outline flex items-center gap-2 text-sm"><Download size={16} /> Export PDF</button>
+        <button onClick={handleExport} className="btn-outline flex items-center gap-2 text-sm"><Download size={16} /> Export CSV</button>
       </div>
 
       {/* Summary Cards */}
@@ -59,6 +79,16 @@ export default function Ledger() {
       {/* Transactions Tab */}
       {activeTab === 'transactions' && (
         <div className="card-static overflow-hidden">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700/50 flex flex-wrap gap-3 items-center">
+             <input type="text" placeholder="Search transactions..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="input-base text-sm w-48 sm:w-64" />
+             <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="input-base text-sm w-auto">
+               <option value="All">All Types</option>
+               <option value="sale">Sale</option>
+               <option value="purchase">Purchase</option>
+               <option value="payment">Payment</option>
+               <option value="expense">Expense</option>
+             </select>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-[700px]">
               <thead><tr className="border-b border-gray-100 dark:border-gray-700">
@@ -67,7 +97,7 @@ export default function Ledger() {
                 ))}
               </tr></thead>
               <tbody>
-                {transactions.map((txn, i) => (
+                {filteredTransactions.map((txn, i) => (
                   <tr key={txn.id} className={`${i % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-800/50'} hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors`}>
                     <td className="py-3 px-4 text-sm text-gray-500">{formatDate(txn.date)}</td>
                     <td className="py-3 px-4 text-sm text-gray-800 dark:text-gray-200">{txn.description}</td>

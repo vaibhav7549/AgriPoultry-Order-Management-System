@@ -35,7 +35,7 @@ export default function Settings() {
 
   // Appearance
   const [themeChoice, setThemeChoice] = useState(isDark ? 'dark' : 'light');
-  const [language, setLanguage] = useState('English');
+
 
   const handleSaveProfile = () => {
     updateProfile(profile);
@@ -200,14 +200,7 @@ export default function Settings() {
                   ))}
                 </div>
               </div>
-              <div>
-                <h3 className="font-heading font-semibold text-gray-900 dark:text-white mb-3">Language</h3>
-                <div className="flex gap-3">
-                  {['English', 'Hindi', 'Marathi'].map(l => (
-                    <button key={l} onClick={() => setLanguage(l)} className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${language === l ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'}`}>{l}</button>
-                  ))}
-                </div>
-              </div>
+
               <div>
                 <h3 className="font-heading font-semibold text-gray-900 dark:text-white mb-1">Currency Display</h3>
                 <p className="text-sm text-gray-500 flex items-center gap-1"><Globe size={14} /> ₹ INR (Indian Rupee)</p>

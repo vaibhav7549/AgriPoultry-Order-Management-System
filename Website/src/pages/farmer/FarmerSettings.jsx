@@ -10,7 +10,6 @@ export default function FarmerSettings() {
     pushNotifications: true,
     smsNotifications: true,
     whatsappUpdates: true,
-    language: 'English',
     dataSharing: false
   });
 
@@ -61,14 +60,7 @@ export default function FarmerSettings() {
             <h2 className="font-heading font-bold text-gray-900 dark:text-white text-lg">Preferences</h2>
           </div>
           <div className="space-y-4 mt-2">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Language</label>
-              <select value={settings.language} onChange={e => setSettings(s => ({ ...s, language: e.target.value }))} className="input-base">
-                <option value="English">English</option>
-                <option value="Marathi">मराठी (Marathi)</option>
-                <option value="Hindi">हिंदी (Hindi)</option>
-              </select>
-            </div>
+
             <div className="pt-2">
               <Toggle label="Analytics Sharing" desc="Share anonymous usage data to help us improve." checked={settings.dataSharing} onChange={() => handleToggle('dataSharing')} />
             </div>

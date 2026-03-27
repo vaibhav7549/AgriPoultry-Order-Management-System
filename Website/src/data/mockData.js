@@ -21,12 +21,12 @@ export const DUMMY_USERS = [
 
 // --- PRODUCTS ---
 export const PRODUCTS = [
-  { id: 'p1', name: 'Starter Feed', category: 'Feed', unit: 'bags', basePrice: 1000, distPrice: 1200, emoji: '🌾', stock: 'High', minOrder: 10, description: 'Nutritious starter feed for young chicks (0-4 weeks)' },
-  { id: 'p2', name: 'Finisher Feed', category: 'Feed', unit: 'bags', basePrice: 1300, distPrice: 1500, emoji: '🌾', stock: 'Medium', minOrder: 10, description: 'High-protein finisher feed for market-ready birds' },
-  { id: 'p3', name: 'Broiler Chicks', category: 'Chicks', unit: 'chicks', basePrice: 32, distPrice: 40, emoji: '🐣', stock: 'Low', minOrder: 100, description: 'Day-old broiler chicks, vaccinated and healthy' },
-  { id: 'p4', name: 'Layer Chicks', category: 'Chicks', unit: 'chicks', basePrice: 40, distPrice: 50, emoji: '🐥', stock: 'High', minOrder: 100, description: 'Day-old layer chicks for egg production' },
-  { id: 'p5', name: 'Premium Feed', category: 'Feed', unit: 'bags', basePrice: 500, distPrice: 650, emoji: '🌿', stock: 'Medium', minOrder: 20, description: 'Organic premium feed blend with added minerals' },
-  { id: 'p6', name: 'Vaccine Pack', category: 'Healthcare', unit: 'packs', basePrice: 250, distPrice: 320, emoji: '💉', stock: 'High', minOrder: 5, description: 'Complete vaccination kit for poultry flocks' },
+  { id: 'p1', name: 'Starter Feed', category: 'Feed', unit: 'bags', costPrice: 900, suggestedDistributorPrice: 1000, suggestedFarmerPrice: 1200, distributorPrices: { 'D001': 950 }, farmerPrices: { 'F001': 1150 }, emoji: '🌾', stock: 'High', minOrder: 10, description: 'Nutritious starter feed for young chicks (0-4 weeks)' },
+  { id: 'p2', name: 'Finisher Feed', category: 'Feed', unit: 'bags', costPrice: 1100, suggestedDistributorPrice: 1300, suggestedFarmerPrice: 1500, distributorPrices: { 'D001': 1250 }, farmerPrices: { 'F001': 1450 }, emoji: '🌾', stock: 'Medium', minOrder: 10, description: 'High-protein finisher feed for market-ready birds' },
+  { id: 'p3', name: 'Broiler Chicks', category: 'Chicks', unit: 'chicks', costPrice: 28, suggestedDistributorPrice: 32, suggestedFarmerPrice: 40, distributorPrices: { 'D001': 30 }, farmerPrices: { 'F001': 38 }, emoji: '🐣', stock: 'Low', minOrder: 100, description: 'Day-old broiler chicks, vaccinated and healthy' },
+  { id: 'p4', name: 'Layer Chicks', category: 'Chicks', unit: 'chicks', costPrice: 35, suggestedDistributorPrice: 40, suggestedFarmerPrice: 50, distributorPrices: { 'D001': 38 }, farmerPrices: { 'F001': 48 }, emoji: '🐥', stock: 'High', minOrder: 100, description: 'Day-old layer chicks for egg production' },
+  { id: 'p5', name: 'Premium Feed', category: 'Feed', unit: 'bags', costPrice: 450, suggestedDistributorPrice: 500, suggestedFarmerPrice: 650, distributorPrices: { 'D001': 480 }, farmerPrices: { 'F001': 620 }, emoji: '🌿', stock: 'Medium', minOrder: 20, description: 'Organic premium feed blend with added minerals' },
+  { id: 'p6', name: 'Vaccine Pack', category: 'Healthcare', unit: 'packs', costPrice: 200, suggestedDistributorPrice: 250, suggestedFarmerPrice: 320, distributorPrices: { 'D001': 230 }, farmerPrices: { 'F001': 300 }, emoji: '💉', stock: 'High', minOrder: 5, description: 'Complete vaccination kit for poultry flocks' },
 ];
 
 // --- FARMERS ---
@@ -51,16 +51,16 @@ export const FARMERS = [
 // --- DISTRIBUTOR / FARMER ORDERS ---
 export const DISTRIBUTOR_ORDERS = [
   { id: 'FO-1001', farmerId: 'F001', farmerName: 'Ramu Kaka', farmerPhone: '9812345001', product: 'Premium Feed', qty: 50, unitPrice: 650, amount: 32500, status: 'Pending', date: '2026-03-25', notes: 'Deliver before weekend' },
-  { id: 'FO-1002', farmerId: 'F002', farmerName: 'Suresh Patil', farmerPhone: '9812345002', product: 'Layer Chicks', qty: 200, unitPrice: 50, amount: 10000, status: 'Fulfilled', date: '2026-03-24', notes: '' },
-  { id: 'FO-1003', farmerId: 'F003', farmerName: 'Ganesh Jadhav', farmerPhone: '9812345003', product: 'Starter Feed', qty: 30, unitPrice: 1200, amount: 36000, status: 'Fulfilled', date: '2026-03-23', notes: 'Regular monthly order' },
+  { id: 'FO-1002', farmerId: 'F002', farmerName: 'Suresh Patil', farmerPhone: '9812345002', product: 'Layer Chicks', qty: 200, unitPrice: 50, amount: 10000, status: 'Delivered', date: '2026-03-24', notes: '' },
+  { id: 'FO-1003', farmerId: 'F003', farmerName: 'Ganesh Jadhav', farmerPhone: '9812345003', product: 'Starter Feed', qty: 30, unitPrice: 1200, amount: 36000, status: 'Delivered', date: '2026-03-23', notes: 'Regular monthly order' },
   { id: 'FO-1004', farmerId: 'F004', farmerName: 'Prakash Shinde', farmerPhone: '9812345004', product: 'Broiler Chicks', qty: 500, unitPrice: 40, amount: 20000, status: 'Cancelled', date: '2026-03-22', notes: 'Customer cancelled' },
   { id: 'FO-1005', farmerId: 'F005', farmerName: 'Rajesh Deshmukh', farmerPhone: '9812345005', product: 'Finisher Feed', qty: 25, unitPrice: 1500, amount: 37500, status: 'Pending', date: '2026-03-22', notes: '' },
-  { id: 'FO-1006', farmerId: 'F006', farmerName: 'Anil More', farmerPhone: '9812345006', product: 'Vaccine Pack', qty: 10, unitPrice: 320, amount: 3200, status: 'Fulfilled', date: '2026-03-21', notes: 'Seasonal vaccination' },
+  { id: 'FO-1006', farmerId: 'F006', farmerName: 'Anil More', farmerPhone: '9812345006', product: 'Vaccine Pack', qty: 10, unitPrice: 320, amount: 3200, status: 'Delivered', date: '2026-03-21', notes: 'Seasonal vaccination' },
   { id: 'FO-1007', farmerId: 'F007', farmerName: 'Vijay Kulkarni', farmerPhone: '9812345007', product: 'Premium Feed', qty: 40, unitPrice: 650, amount: 26000, status: 'Pending', date: '2026-03-20', notes: '' },
-  { id: 'FO-1008', farmerId: 'F009', farmerName: 'Manoj Gaikwad', farmerPhone: '9812345009', product: 'Starter Feed', qty: 60, unitPrice: 1200, amount: 72000, status: 'Fulfilled', date: '2026-03-19', notes: 'Bulk purchase' },
+  { id: 'FO-1008', farmerId: 'F009', farmerName: 'Manoj Gaikwad', farmerPhone: '9812345009', product: 'Starter Feed', qty: 60, unitPrice: 1200, amount: 72000, status: 'Delivered', date: '2026-03-19', notes: 'Bulk purchase' },
   { id: 'FO-1009', farmerId: 'F010', farmerName: 'Deepak Nikam', farmerPhone: '9812345010', product: 'Layer Chicks', qty: 300, unitPrice: 50, amount: 15000, status: 'Pending', date: '2026-03-18', notes: '' },
-  { id: 'FO-1010', farmerId: 'F011', farmerName: 'Sanjay Bhosale', farmerPhone: '9812345011', product: 'Finisher Feed', qty: 15, unitPrice: 1500, amount: 22500, status: 'Fulfilled', date: '2026-03-17', notes: '' },
-  { id: 'FO-1011', farmerId: 'F013', farmerName: 'Kiran Chavan', farmerPhone: '9812345013', product: 'Broiler Chicks', qty: 1000, unitPrice: 40, amount: 40000, status: 'Fulfilled', date: '2026-03-16', notes: 'Large order' },
+  { id: 'FO-1010', farmerId: 'F011', farmerName: 'Sanjay Bhosale', farmerPhone: '9812345011', product: 'Finisher Feed', qty: 15, unitPrice: 1500, amount: 22500, status: 'Delivered', date: '2026-03-17', notes: '' },
+  { id: 'FO-1011', farmerId: 'F013', farmerName: 'Kiran Chavan', farmerPhone: '9812345013', product: 'Broiler Chicks', qty: 1000, unitPrice: 40, amount: 40000, status: 'Delivered', date: '2026-03-16', notes: 'Large order' },
   { id: 'FO-1012', farmerId: 'F015', farmerName: 'Mahesh Yadav', farmerPhone: '9812345015', product: 'Premium Feed', qty: 20, unitPrice: 650, amount: 13000, status: 'Cancelled', date: '2026-03-15', notes: 'Payment issue' },
 ];
 
@@ -214,14 +214,14 @@ export const COMPANY_TRANSACTIONS = [
 // --- FARMER PORTAL ORDERS (Farmer-facing orders) ---
 export const FARMER_PORTAL_ORDERS = [
   { id: "FO-3001", farmerId: "F001", product: "Premium Feed", qty: 50, unitPrice: 500, amount: 25000, date: "2026-03-20", status: "Pending", notes: "Please deliver before month end" },
-  { id: "FO-3002", farmerId: "F001", product: "Layer Chicks", qty: 200, unitPrice: 40, amount: 8000, date: "2026-03-10", status: "Fulfilled", deliveredDate: "2026-03-14" },
+  { id: "FO-3002", farmerId: "F001", product: "Layer Chicks", qty: 200, unitPrice: 40, amount: 8000, date: "2026-03-10", status: "Delivered", deliveredDate: "2026-03-14" },
   { id: "FO-3003", farmerId: "F001", product: "Starter Feed", qty: 30, unitPrice: 1000, amount: 30000, date: "2026-02-28", status: "Shipped" },
-  { id: "FO-3004", farmerId: "F001", product: "Broiler Chicks", qty: 100, unitPrice: 32, amount: 3200, date: "2026-02-15", status: "Fulfilled" },
-  { id: "FO-3005", farmerId: "F001", product: "Finisher Feed", qty: 20, unitPrice: 1300, amount: 26000, date: "2026-01-30", status: "Fulfilled" },
+  { id: "FO-3004", farmerId: "F001", product: "Broiler Chicks", qty: 100, unitPrice: 32, amount: 3200, date: "2026-02-15", status: "Delivered" },
+  { id: "FO-3005", farmerId: "F001", product: "Finisher Feed", qty: 20, unitPrice: 1300, amount: 26000, date: "2026-01-30", status: "Delivered" },
   { id: "FO-3006", farmerId: "F001", product: "Vaccine Pack", qty: 5, unitPrice: 250, amount: 1250, date: "2026-01-10", status: "Cancelled" },
   // Example for F002 & F003
   { id: "FO-3007", farmerId: "F002", product: "Starter Feed", qty: 10, unitPrice: 1000, amount: 10000, date: "2026-03-25", status: "Pending" },
-  { id: "FO-3008", farmerId: "F002", product: "Layer Chicks", qty: 100, unitPrice: 40, amount: 4000, date: "2026-03-15", status: "Fulfilled", deliveredDate: "2026-03-18" },
+  { id: "FO-3008", farmerId: "F002", product: "Layer Chicks", qty: 100, unitPrice: 40, amount: 4000, date: "2026-03-15", status: "Delivered", deliveredDate: "2026-03-18" },
   { id: "FO-3009", farmerId: "F003", product: "Broiler Chicks", qty: 50, unitPrice: 32, amount: 1600, date: "2026-03-22", status: "Pending" },
 ];
 

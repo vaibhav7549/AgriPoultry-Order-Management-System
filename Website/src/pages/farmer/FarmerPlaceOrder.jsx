@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { ShoppingCart, Plus, Minus, Send, X, PackageSearch, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrencyFull } from '../../utils/helpers';
-import { PRODUCTS_FOR_FARMERS } from '../../data/mockData';
+import { PRODUCTS } from '../../data/mockData';
 
 export default function FarmerPlaceOrder() {
   const { currentUser } = useAuth();
@@ -13,17 +13,19 @@ export default function FarmerPlaceOrder() {
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
-  const subtotal = farmerDraft.reduce((acc, item) => acc + (item.distributorPrice * item.qty), 0);
+  const subtotal = farmerDraft.reduce((acc, item) => acc + ((item.farmerPrices?.[currentUser?.id] || item.suggestedFarmerPrice || item.distributorPrice || item.unitPrice || 0) * item.qty), 0);
   const gst = Math.round(subtotal * 0.05);
   const grandTotal = subtotal + gst;
 
   const handleAddToCart = (product) => {
-    // Default quantity depending on type
     const defaultQty = product.category === 'Feed' ? 5 : product.category === 'Chicks' ? 100 : 1;
-    addToFarmerDraft({ ...product, qty: defaultQty });
+    const price = product.farmerPrices?.[currentUser?.id] || product.suggestedFarmerPrice || product.distributorPrice || product.unitPrice || 0;
+    addToFarmerDraft({ ...product, qty: defaultQty, distributorPrice: price });
     addToast(`${product.name} added to draft`, 'success');
   };
 
@@ -43,38 +45,52 @@ export default function FarmerPlaceOrder() {
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
-        {/* Product catalog */}
-        <div className="w-full lg:w-2/3 overflow-y-auto scrollbar-custom pr-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {PRODUCTS_FOR_FARMERS.map(product => {
-              const inDraft = farmerDraft.find(d => d.id === product.id);
-              return (
-                <div key={product.id} className="card-static p-4 flex flex-col justify-between group">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="text-3xl group-hover:scale-110 transition-transform">{product.emoji}</div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">{product.category}</span>
+        <div className="w-full lg:w-2/3 flex flex-col gap-4 overflow-hidden">
+          <div className="flex gap-2 shrink-0">
+             <div className="relative flex-1">
+               <PackageSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+               <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search supplies..." className="pl-8 pr-3 py-2 input-base text-sm w-full" />
+             </div>
+             <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input-base text-sm w-auto shrink-0">
+               <option value="All">All Categories</option>
+               <option value="Feed">Feed</option>
+               <option value="Chicks">Chicks</option>
+               <option value="Healthcare">Healthcare</option>
+             </select>
+          </div>
+          <div className="flex-1 overflow-y-auto scrollbar-custom pr-1 pb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {PRODUCTS.filter(p => (categoryFilter === 'All' || p.category === categoryFilter) && (!searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))).map(product => {
+                const inDraft = farmerDraft.find(d => d.id === product.id);
+                const price = product.farmerPrices?.[currentUser?.id] || product.suggestedFarmerPrice || product.distributorPrice || product.unitPrice || 0;
+                return (
+                  <div key={product.id} className="card-static p-4 flex flex-col justify-between group">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="text-3xl group-hover:scale-110 transition-transform">{product.emoji}</div>
+                      <span className="text-xs font-semibold px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">{product.category}</span>
+                    </div>
+                    <h3 className="font-bold text-gray-900 dark:text-white">{product.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{product.description}</p>
+                    <div className="flex items-end justify-between mt-3">
+                      <p className="text-green-600 dark:text-green-400 font-bold text-lg">
+                        {formatCurrencyFull(price)} <span className="text-xs font-normal text-gray-500">/{product.unit}</span>
+                      </p>
+                      {inDraft ? (
+                        <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 rounded-lg px-1">
+                          <button onClick={() => updateFarmerDraftQty(product.id, inDraft.qty - 1)} className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-800 rounded transition-colors"><Minus size={14} /></button>
+                          <span className="w-8 text-center text-sm font-bold text-green-700 dark:text-green-400">{inDraft.qty}</span>
+                          <button onClick={() => updateFarmerDraftQty(product.id, inDraft.qty + 1)} className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-800 rounded transition-colors"><Plus size={14} /></button>
+                        </div>
+                      ) : (
+                        <button onClick={() => handleAddToCart(product)} className="text-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-500 hover:text-white dark:hover:bg-green-500 dark:hover:text-white p-2 rounded-lg transition-all">
+                          <Plus size={18} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white">{product.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{product.description}</p>
-                  <div className="flex items-end justify-between mt-3">
-                    <p className="text-green-600 dark:text-green-400 font-bold text-lg">
-                      {formatCurrencyFull(product.distributorPrice)} <span className="text-xs font-normal text-gray-500">/{product.unit}</span>
-                    </p>
-                    {inDraft ? (
-                      <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 rounded-lg px-1">
-                        <button onClick={() => updateFarmerDraftQty(product.id, inDraft.qty - 1)} className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-800 rounded transition-colors"><Minus size={14} /></button>
-                        <span className="w-8 text-center text-sm font-bold text-green-700 dark:text-green-400">{inDraft.qty}</span>
-                        <button onClick={() => updateFarmerDraftQty(product.id, inDraft.qty + 1)} className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-800 rounded transition-colors"><Plus size={14} /></button>
-                      </div>
-                    ) : (
-                      <button onClick={() => handleAddToCart(product)} className="text-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-500 hover:text-white dark:hover:bg-green-500 dark:hover:text-white p-2 rounded-lg transition-all">
-                        <Plus size={18} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 

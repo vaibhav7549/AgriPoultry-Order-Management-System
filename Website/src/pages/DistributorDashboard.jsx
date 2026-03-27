@@ -10,7 +10,7 @@ import { formatCurrencyFull, getStatusColor } from '../utils/helpers';
 
 const ORDER_STATUS_DATA = [
   { name: 'Pending', value: 4, color: '#f59e0b' },
-  { name: 'Fulfilled', value: 6, color: '#22c55e' },
+  { name: 'Delivered', value: 6, color: '#22c55e' },
   { name: 'Cancelled', value: 2, color: '#ef4444' },
 ];
 
@@ -61,7 +61,7 @@ export default function DistributorDashboard() {
 
       {/* Stat Cards */}
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/farmer-orders')} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Farmers Managed</p>
@@ -72,7 +72,7 @@ export default function DistributorDashboard() {
           <div className="mt-3 flex items-center text-sm"><span className="text-green-600 font-semibold">+12%</span><span className="text-gray-400 ml-2">from last month</span></div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/farmer-orders', { state: { statusFilter: 'Pending' } })} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Orders</p>
@@ -83,7 +83,7 @@ export default function DistributorDashboard() {
           <div className="mt-3"><span className="text-amber-500 font-semibold text-sm">Needs attention</span></div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/ledger')} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Revenue</p>
@@ -94,7 +94,7 @@ export default function DistributorDashboard() {
           <div className="mt-3 flex items-center text-sm"><span className="text-green-600 font-semibold">+8%</span><span className="text-gray-400 ml-2">from last month</span></div>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="card-static p-5">
+        <motion.div variants={itemVariants} onClick={() => navigate('/ledger')} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Due to Company</p>

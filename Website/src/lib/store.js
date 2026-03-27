@@ -39,11 +39,11 @@ export const useStore = create((set, get) => ({
       id: `BO-${2000 + state.kanbanOrders.length + 1}`,
       distributorId: 'D001',
       distributorName: userName || 'Current Distributor',
-      totalValue: state.bulkDraft.reduce((acc, item) => acc + (item.basePrice * item.qty), 0),
+      totalValue: state.bulkDraft.reduce((acc, item) => acc + ((item.distributorPrices?.['D001'] || item.suggestedDistributorPrice || item.basePrice || 0) * item.qty), 0),
       status: 'New Orders',
       date: new Date().toISOString().split('T')[0],
       contact: '9876543210',
-      items: state.bulkDraft.map(i => ({ product: i.name, qty: i.qty, price: i.basePrice })),
+      items: state.bulkDraft.map(i => ({ product: i.name, qty: i.qty, price: (i.distributorPrices?.['D001'] || i.suggestedDistributorPrice || i.basePrice || 0) })),
     };
     return {
       bulkDraft: [],
@@ -101,12 +101,13 @@ export const useStore = create((set, get) => ({
   })),
   clearFarmerDraft: () => set({ farmerDraft: [] }),
   submitFarmerDraft: (farmerId, farmerName) => set((state) => {
-    const totalValue = state.farmerDraft.reduce((acc, item) => acc + (item.distributorPrice * item.qty), 0);
+    const fId = farmerId || 'F001';
+    const totalValue = state.farmerDraft.reduce((acc, item) => acc + ((item.farmerPrices?.[fId] || item.suggestedFarmerPrice || item.distributorPrice || item.unitPrice || 0) * item.qty), 0);
     const newOrder = {
       id: `FPO-${3000 + state.farmerPortalOrders.length + 1}`,
-      farmerId: farmerId || 'F001',
+      farmerId: fId,
       date: new Date().toISOString().split('T')[0],
-      items: state.farmerDraft.map(i => ({ product: i.name, qty: i.qty, price: i.distributorPrice })),
+      items: state.farmerDraft.map(i => ({ product: i.name, qty: i.qty, price: (i.farmerPrices?.[fId] || i.suggestedFarmerPrice || i.distributorPrice || i.unitPrice || 0) })),
       totalValue: totalValue,
       status: 'Pending',
     };

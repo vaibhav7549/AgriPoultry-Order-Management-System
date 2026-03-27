@@ -3,12 +3,14 @@ import { useToast } from '../context/ToastContext';
 import { Search, Download, AlertTriangle, X, IndianRupee, ArrowUpRight, ArrowDownLeft, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrencyFull, formatDate, getStatusColor } from '../utils/helpers';
+import { exportToCSV } from '../utils/exportUtils';
 import { DISTRIBUTORS, COMPANY_TRANSACTIONS } from '../data/mockData';
 
 export default function DistributorLedger() {
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [selectedDist, setSelectedDist] = useState(DISTRIBUTORS[0]?.id || '');
+  const [selectedDist, setSelectedDist] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('transactions');
   const [transactions, setTransactions] = useState(COMPANY_TRANSACTIONS);
   const [showPayModal, setShowPayModal] = useState(null);
@@ -16,8 +18,9 @@ export default function DistributorLedger() {
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
-  const distributor = DISTRIBUTORS.find(d => d.id === selectedDist);
-  const distTransactions = transactions.filter(t => t.distributorId === selectedDist);
+  const distributor = selectedDist === 'All' ? null : DISTRIBUTORS.find(d => d.id === selectedDist);
+  const distTransactions = selectedDist === 'All' ? transactions : transactions.filter(t => t.distributorId === selectedDist);
+  const filteredTransactions = distTransactions.filter(t => !searchTerm || t.orderId.toLowerCase().includes(searchTerm.toLowerCase()) || t.paymentMode?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleMarkPaid = () => {
     if (!payForm.amount) return;
@@ -27,10 +30,22 @@ export default function DistributorLedger() {
     setPayForm({ amount: '', mode: 'NEFT', reference: '', date: new Date().toISOString().split('T')[0] });
   };
 
+  const handleExport = () => {
+    const exportData = distTransactions.map(t => ({
+      Date: t.date,
+      'Order ID': t.orderId,
+      'Order Amount': t.orderAmount,
+      'Amount Paid': t.amountPaid,
+      'Payment Mode': t.paymentMode || '',
+      'Balance Due': t.balanceDue,
+      Status: t.status
+    }));
+    exportToCSV(exportData, `Distributor_Ledger_${distributor?.name || 'All'}`);
+  };
+
   const tabs = [
     { key: 'transactions', label: 'Transactions' },
     { key: 'payments', label: 'Payment History' },
-    { key: 'credit', label: 'Credit Notes' },
   ];
 
   if (loading) return <div className="space-y-4"><div className="h-12 skeleton w-1/3" /><div className="grid grid-cols-4 gap-4">{[1,2,3,4].map(i => <div key={i} className="h-24 skeleton" />)}</div><div className="h-80 skeleton mt-4" /></div>;
@@ -42,11 +57,16 @@ export default function DistributorLedger() {
           <h1 className="text-2xl font-heading font-bold text-gray-900 dark:text-white">Distributor Ledger</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Track payments and outstanding balances</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search order ID or mode..." className="pl-8 pr-3 py-2 input-base text-sm w-48 sm:w-64" />
+          </div>
           <select value={selectedDist} onChange={e => setSelectedDist(e.target.value)} className="input-base w-auto text-sm py-2">
+            <option value="All">All Distributors</option>
             {DISTRIBUTORS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
-          <button className="btn-outline flex items-center gap-1 text-sm"><Download size={14} /> Export</button>
+          <button onClick={handleExport} className="btn-outline flex items-center gap-1 text-sm py-2"><Download size={14} /> Export</button>
         </div>
       </div>
 
@@ -62,12 +82,11 @@ export default function DistributorLedger() {
 
       {/* Summary Cards */}
       {distributor && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'Total Ordered', value: formatCurrencyFull(distributor.totalOrdered), icon: <IndianRupee size={18} />, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30' },
             { label: 'Total Paid', value: formatCurrencyFull(distributor.totalPaid), icon: <ArrowUpRight size={18} />, color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
             { label: 'Outstanding', value: formatCurrencyFull(distributor.outstanding), icon: <ArrowDownLeft size={18} />, color: 'text-red-600 bg-red-50 dark:bg-red-900/30' },
-            { label: 'Credit Limit', value: formatCurrencyFull(distributor.creditLimit), icon: <CreditCard size={18} />, color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30' },
           ].map((card, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="card-static p-4 flex items-center gap-3">
               <div className={`p-2 rounded-xl ${card.color}`}>{card.icon}</div>
@@ -95,7 +114,7 @@ export default function DistributorLedger() {
                 ))}
               </tr></thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                {distTransactions.map(txn => (
+                {filteredTransactions.map(txn => (
                   <tr key={txn.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <td className="py-3 px-4 text-sm text-gray-500">{formatDate(txn.date)}</td>
                     <td className="py-3 px-4 text-sm font-semibold text-green-600">{txn.orderId}</td>
@@ -128,7 +147,7 @@ export default function DistributorLedger() {
                 ))}
               </tr></thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
-                {distTransactions.filter(t => t.amountPaid > 0).map(txn => (
+                {filteredTransactions.filter(t => t.amountPaid > 0).map(txn => (
                   <tr key={txn.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
                     <td className="py-3 px-4 text-sm text-gray-500">{formatDate(txn.date)}</td>
                     <td className="py-3 px-4 text-sm font-semibold text-green-600">{txn.orderId}</td>
@@ -140,13 +159,6 @@ export default function DistributorLedger() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* Credit Notes Tab */}
-      {activeTab === 'credit' && (
-        <div className="card-static p-8 text-center">
-          <p className="text-gray-400 dark:text-gray-500 text-sm">No credit notes available for this distributor.</p>
         </div>
       )}
 

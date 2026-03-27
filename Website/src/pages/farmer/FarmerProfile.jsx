@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, MapPin, Lock, Save, Camera } from 'lucide-react';
+import { useStore } from '../../lib/store';
+import { User, MapPin, Lock, Save, Camera, History, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
 
 export default function FarmerProfile() {
   const { currentUser } = useAuth();
   const { addToast } = useToast();
+  const { farmerPortalOrders } = useStore();
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -38,7 +40,8 @@ export default function FarmerProfile() {
   const tabs = [
     { id: 'personal', label: 'Personal Info', icon: <User size={18} /> },
     { id: 'farm', label: 'Farm Details', icon: <MapPin size={18} /> },
-    { id: 'security', label: 'Security', icon: <Lock size={18} /> }
+    { id: 'security', label: 'Security', icon: <Lock size={18} /> },
+    { id: 'history', label: 'Order History', icon: <History size={18} /> }
   ];
 
   if (loading) return <div className="space-y-4"><div className="h-40 skeleton" /><div className="h-96 skeleton" /></div>;
@@ -161,6 +164,41 @@ export default function FarmerProfile() {
                   </div>
                   <div className="pt-2">
                     <button type="button" className="text-sm text-green-600 dark:text-green-400 font-medium hover:underline">Forgot your password?</button>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'history' && (
+                <div className="space-y-6">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Recent Orders Activity</h3>
+                  <div className="relative border-l-2 border-green-200 dark:border-green-900/50 pl-5 space-y-6 ml-2">
+                    {farmerPortalOrders?.slice(0, 5).map(order => (
+                      <div key={order.id} className="relative">
+                        <div className="absolute -left-[29px] w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 border-4 border-white dark:border-gray-800 flex items-center justify-center text-green-600 dark:text-green-400">
+                          <Package size={10} />
+                        </div>
+                        <div className="card-static p-4 sm:p-5">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                            <h4 className="font-bold text-gray-900 dark:text-white text-sm">Order {order.id}</h4>
+                            <span className="text-xs text-gray-500">{order.date}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {order.items?.map((item, idx) => (
+                              <span key={idx} className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded">
+                                {item.qty}x {item.product}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="flex justify-between items-center border-t border-gray-100 dark:border-gray-700/50 pt-3">
+                            <span className="font-medium text-gray-900 dark:text-white text-sm">₹{order.totalValue?.toLocaleString()}</span>
+                            <span className={`text-xs font-semibold ${order.status === 'Delivered' ? 'text-green-600' : order.status === 'Cancelled' ? 'text-red-500' : 'text-blue-500'}`}>{order.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {!farmerPortalOrders?.length && (
+                      <p className="text-gray-500 text-sm">No recent orders found.</p>
+                    )}
                   </div>
                 </div>
               )}

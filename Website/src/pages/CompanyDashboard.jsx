@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Store, PackageSearch, Truck, IndianRupee, BellRing } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { LIVE_FEED_EVENTS, MONTHLY_REVENUE, TOP_DISTRIBUTORS } from '../data/mockData';
 
 export default function CompanyDashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [feedIdx, setFeedIdx] = useState(0);
   const [visibleFeeds, setVisibleFeeds] = useState(LIVE_FEED_EVENTS.slice(0, 6));
@@ -58,12 +60,17 @@ export default function CompanyDashboard() {
       {/* Stat Cards */}
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Active Distributors', value: '48', icon: <Store size={24} />, bg: 'bg-indigo-50 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400' },
-          { label: 'Pending Bulk Orders', value: '14', icon: <PackageSearch size={24} />, bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' },
-          { label: 'Units Shipped YTD', value: '1.2M+', icon: <Truck size={24} />, bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' },
-          { label: 'Gross Revenue YTD', value: '₹45.2M', icon: <IndianRupee size={24} />, bg: 'bg-green-50 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400' },
+          { label: 'Active Distributors', value: '48', icon: <Store size={24} />, bg: 'bg-indigo-50 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400', path: '/distributor-ledger' },
+          { label: 'Pending Bulk Orders', value: '14', icon: <PackageSearch size={24} />, bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', path: '/kanban-fulfillment' },
+          { label: 'Units Shipped YTD', value: '1.2M+', icon: <Truck size={24} />, bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400', path: '/kanban-fulfillment' },
+          { label: 'Gross Revenue YTD', value: '₹45.2M', icon: <IndianRupee size={24} />, bg: 'bg-green-50 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400', path: '/distributor-ledger' },
         ].map((card, i) => (
-          <motion.div key={i} variants={itemVariants} className="card-static p-5 flex items-center gap-4">
+          <motion.div 
+            key={i} 
+            variants={itemVariants} 
+            onClick={() => navigate(card.path)}
+            className="card-static p-5 flex items-center gap-4 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all hover:-translate-y-1"
+          >
             <div className={`p-3 rounded-2xl ${card.bg} ${card.text}`}>{card.icon}</div>
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.label}</p>
@@ -137,7 +144,7 @@ export default function CompanyDashboard() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="card-static p-5">
         <h2 className="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-4">Distributor Network — Maharashtra</h2>
         <div className="relative h-64 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-700 rounded-xl overflow-hidden flex items-center justify-center">
-          <svg viewBox="0 0 400 300" className="w-full h-full max-w-md opacity-30 dark:opacity-20" fill="none" stroke="currentColor" strokeWidth="1" className="text-green-600">
+          <svg viewBox="0 0 400 300" className="w-full h-full max-w-md opacity-30 dark:opacity-20 text-green-600" fill="none" stroke="currentColor" strokeWidth="1">
             <path d="M120,80 Q160,40 220,60 Q280,80 300,120 Q320,170 280,220 Q240,260 180,250 Q120,240 100,200 Q80,160 100,120 Q110,90 120,80 Z" fill="currentColor" opacity="0.1" stroke="currentColor" />
           </svg>
           {/* City dots */}

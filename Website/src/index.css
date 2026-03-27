@@ -47,7 +47,7 @@
   .badge-pending {
     @apply bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800;
   }
-  .badge-fulfilled, .badge-delivered {
+  .badge-delivered {
     @apply bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800;
   }
   .badge-processing {

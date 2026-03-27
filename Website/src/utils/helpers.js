@@ -31,11 +31,11 @@ export function formatDate(dateStr) {
 /** Get status badge CSS class */
 export function getStatusColor(status) {
   const s = (status || '').toLowerCase();
-  if (s === 'pending' || s === 'new orders') return 'badge-pending';
-  if (s === 'fulfilled' || s === 'delivered' || s === 'paid') return 'badge-fulfilled';
-  if (s === 'processing' || s === 'partial') return 'badge-processing';
+  if (s === 'pending') return 'badge-pending';
+  if (s === 'processing') return 'badge-processing';
   if (s === 'shipped') return 'badge-shipped';
-  if (s === 'cancelled' || s === 'overdue' || s === 'unpaid') return 'badge-cancelled';
+  if (s === 'delivered') return 'badge-delivered';
+  if (s === 'cancelled' || s === 'rejected') return 'badge-cancelled';
   return 'badge-pending';
 }
 

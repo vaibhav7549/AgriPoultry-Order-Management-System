@@ -14,25 +14,25 @@ export default function ProductMaster() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showHistory, setShowHistory] = useState(null);
-  const [newProduct, setNewProduct] = useState({ name: '', description: '', unit: 'bags', basePrice: '', distPrice: '', stock: 'Medium', emoji: '📦', minOrder: '', category: 'Feed' });
+  const [showSpecific, setShowSpecific] = useState(null);
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', unit: 'bags', costPrice: '', suggestedDistributorPrice: '', suggestedFarmerPrice: '', stock: 'Medium', emoji: '📦', minOrder: '', category: 'Feed' });
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
-  const startEdit = (product) => { setEditingId(product.id); setEditForm({ basePrice: product.basePrice, distPrice: product.distPrice, stock: product.stock, minOrder: product.minOrder }); };
+  const startEdit = (product) => { setEditingId(product.id); setEditForm({ costPrice: product.costPrice, suggestedDistributorPrice: product.suggestedDistributorPrice, suggestedFarmerPrice: product.suggestedFarmerPrice, stock: product.stock, minOrder: product.minOrder }); };
 
   const saveEdit = () => {
-    updateProduct(editingId, { basePrice: Number(editForm.basePrice), distPrice: Number(editForm.distPrice), stock: editForm.stock, minOrder: Number(editForm.minOrder) });
+    updateProduct(editingId, { costPrice: Number(editForm.costPrice), suggestedDistributorPrice: Number(editForm.suggestedDistributorPrice), suggestedFarmerPrice: Number(editForm.suggestedFarmerPrice), stock: editForm.stock, minOrder: Number(editForm.minOrder) });
     addToast('Pricing updated and synced to distributors', 'success');
     setEditingId(null);
   };
 
   const handleAddProduct = (e) => {
     e.preventDefault();
-    addProduct({ ...newProduct, basePrice: Number(newProduct.basePrice), distPrice: Number(newProduct.distPrice), minOrder: Number(newProduct.minOrder) });
+    addProduct({ ...newProduct, costPrice: Number(newProduct.costPrice), suggestedDistributorPrice: Number(newProduct.suggestedDistributorPrice), suggestedFarmerPrice: Number(newProduct.suggestedFarmerPrice), minOrder: Number(newProduct.minOrder) });
     addToast('New product added successfully', 'success');
     setShowAddModal(false);
-    setNewProduct({ name: '', description: '', unit: 'bags', basePrice: '', distPrice: '', stock: 'Medium', emoji: '📦', minOrder: '', category: 'Feed' });
+    setNewProduct({ name: '', description: '', unit: 'bags', costPrice: '', suggestedDistributorPrice: '', suggestedFarmerPrice: '', stock: 'Medium', emoji: '📦', minOrder: '', category: 'Feed' });
   };
 
   const lowStockProducts = products.filter(p => p.stock === 'Low');
@@ -55,7 +55,6 @@ export default function ProductMaster() {
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
             {products.map(product => {
               const isEditing = editingId === product.id;
-              const margin = product.basePrice > 0 ? Math.round(((product.distPrice - product.basePrice) / product.basePrice) * 100) : 0;
 
               return (
                 <div key={product.id} className="card-static p-4 flex flex-col justify-between">
@@ -70,13 +69,12 @@ export default function ProductMaster() {
 
                     {isEditing ? (
                       <div className="space-y-2 mt-3">
-                        <div><label className="text-xs text-gray-500">Base Price (₹)</label>
-                          <input type="number" value={editForm.basePrice} onChange={e => setEditForm(f => ({ ...f, basePrice: e.target.value }))} className="input-base text-sm py-1.5" /></div>
-                        <div><label className="text-xs text-gray-500">Dist Price (₹)</label>
-                          <input type="number" value={editForm.distPrice} onChange={e => setEditForm(f => ({ ...f, distPrice: e.target.value }))} className="input-base text-sm py-1.5" /></div>
-                        {editForm.basePrice > 0 && editForm.distPrice > 0 && (
-                          <p className="text-xs text-green-600 font-medium">{Math.round(((editForm.distPrice - editForm.basePrice) / editForm.basePrice) * 100)}% margin</p>
-                        )}
+                        <div><label className="text-xs text-gray-500">Cost Price (₹)</label>
+                          <input type="number" value={editForm.costPrice} onChange={e => setEditForm(f => ({ ...f, costPrice: e.target.value }))} className="input-base text-sm py-1.5" /></div>
+                        <div><label className="text-xs text-gray-500">Sugg. Dist Price (₹)</label>
+                          <input type="number" value={editForm.suggestedDistributorPrice} onChange={e => setEditForm(f => ({ ...f, suggestedDistributorPrice: e.target.value }))} className="input-base text-sm py-1.5" /></div>
+                        <div><label className="text-xs text-gray-500">Sugg. Farmer Price (₹)</label>
+                          <input type="number" value={editForm.suggestedFarmerPrice} onChange={e => setEditForm(f => ({ ...f, suggestedFarmerPrice: e.target.value }))} className="input-base text-sm py-1.5" /></div>
                         <div><label className="text-xs text-gray-500">Stock Level</label>
                           <select value={editForm.stock} onChange={e => setEditForm(f => ({ ...f, stock: e.target.value }))} className="input-base text-sm py-1.5">
                             <option>High</option><option>Medium</option><option>Low</option>
@@ -89,13 +87,13 @@ export default function ProductMaster() {
                     ) : (
                       <>
                         <div className="space-y-1.5 mt-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2.5">
-                          <div className="flex justify-between text-sm"><span className="text-gray-500">Base Price</span><span className="font-bold text-green-600">{formatCurrencyFull(product.basePrice)}</span></div>
-                          <div className="flex justify-between text-sm"><span className="text-gray-500">Sugg. Dist</span><span className="font-bold text-gray-700 dark:text-gray-200">{formatCurrencyFull(product.distPrice)}</span></div>
-                          <div className="text-xs text-green-600 font-medium">{margin}% margin</div>
+                          <div className="flex justify-between text-sm"><span className="text-gray-500">Cost Price</span><span className="font-bold text-red-600">{formatCurrencyFull(product.costPrice || 0)}</span></div>
+                          <div className="flex justify-between text-sm"><span className="text-gray-500">Sugg. Dist</span><span className="font-bold text-gray-700 dark:text-gray-200">{formatCurrencyFull(product.suggestedDistributorPrice || 0)}</span></div>
+                          <div className="flex justify-between text-sm"><span className="text-gray-500">Sugg. Farmer</span><span className="font-bold text-green-600">{formatCurrencyFull(product.suggestedFarmerPrice || 0)}</span></div>
                         </div>
                         <div className="flex gap-2 mt-3">
                           <button onClick={() => startEdit(product)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-sm text-green-600 border border-green-200 rounded-lg hover:bg-green-50 font-medium transition-colors"><Edit3 size={14} /> Edit</button>
-                          <button onClick={() => setShowHistory(product)} className="px-2 py-1.5 text-gray-400 hover:text-gray-600 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 transition-colors"><History size={14} /></button>
+                          <button onClick={() => setShowSpecific(product)} className="flex-1 py-1.5 text-xs text-blue-600 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">Custom Prices</button>
                         </div>
                       </>
                     )}
@@ -148,11 +146,11 @@ export default function ProductMaster() {
                   <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Category</label><select value={newProduct.category} onChange={e => setNewProduct(p => ({ ...p, category: e.target.value }))} className="input-base text-sm"><option>Feed</option><option>Chicks</option><option>Healthcare</option></select></div>
                   <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Unit</label><select value={newProduct.unit} onChange={e => setNewProduct(p => ({ ...p, unit: e.target.value }))} className="input-base text-sm"><option value="bags">Bags</option><option value="chicks">Chicks</option><option value="packs">Packs</option></select></div>
                 </div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Cost Price (₹)</label><input required type="number" value={newProduct.costPrice} onChange={e => setNewProduct(p => ({ ...p, costPrice: e.target.value }))} className="input-base text-sm" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Base Price (₹)</label><input required type="number" value={newProduct.basePrice} onChange={e => setNewProduct(p => ({ ...p, basePrice: e.target.value }))} className="input-base text-sm" /></div>
-                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Dist Price (₹)</label><input required type="number" value={newProduct.distPrice} onChange={e => setNewProduct(p => ({ ...p, distPrice: e.target.value }))} className="input-base text-sm" /></div>
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Sugg. Dist (₹)</label><input required type="number" value={newProduct.suggestedDistributorPrice} onChange={e => setNewProduct(p => ({ ...p, suggestedDistributorPrice: e.target.value }))} className="input-base text-sm" /></div>
+                  <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Sugg. Farmer (₹)</label><input required type="number" value={newProduct.suggestedFarmerPrice} onChange={e => setNewProduct(p => ({ ...p, suggestedFarmerPrice: e.target.value }))} className="input-base text-sm" /></div>
                 </div>
-                {newProduct.basePrice > 0 && newProduct.distPrice > 0 && <p className="text-sm text-green-600 font-medium">{Math.round(((newProduct.distPrice - newProduct.basePrice) / newProduct.basePrice) * 100)}% above base</p>}
                 <div className="grid grid-cols-2 gap-3">
                   <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Stock</label><select value={newProduct.stock} onChange={e => setNewProduct(p => ({ ...p, stock: e.target.value }))} className="input-base text-sm"><option>High</option><option>Medium</option><option>Low</option></select></div>
                   <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Min Order</label><input type="number" value={newProduct.minOrder} onChange={e => setNewProduct(p => ({ ...p, minOrder: e.target.value }))} className="input-base text-sm" /></div>
@@ -165,25 +163,39 @@ export default function ProductMaster() {
       </AnimatePresence>
 
       {/* Price History Modal */}
+      {/* Specific Prices Modal */}
       <AnimatePresence>
-        {showHistory && (
+        {showSpecific && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full">
               <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                <h3 className="font-heading font-bold text-gray-900 dark:text-white">Price History — {showHistory.name}</h3>
-                <button onClick={() => setShowHistory(null)} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+                <h3 className="font-heading font-bold text-gray-900 dark:text-white">Custom Pricing — {showSpecific.name}</h3>
+                <button onClick={() => setShowSpecific(null)} className="p-1 text-gray-400 hover:text-gray-600"><X size={18} /></button>
               </div>
-              <div className="p-5 space-y-2">
-                {[
-                  { date: '15 Mar 2026', base: showHistory.basePrice, dist: showHistory.distPrice },
-                  { date: '01 Mar 2026', base: Math.round(showHistory.basePrice * 0.95), dist: Math.round(showHistory.distPrice * 0.95) },
-                  { date: '15 Feb 2026', base: Math.round(showHistory.basePrice * 0.9), dist: Math.round(showHistory.distPrice * 0.9) },
-                ].map((h, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
-                    <span className="text-gray-500">{h.date}</span>
-                    <span className="text-gray-800 dark:text-gray-200 font-medium">{formatCurrencyFull(h.base)} / {formatCurrencyFull(h.dist)}</span>
-                  </div>
-                ))}
+              <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto scrollbar-custom">
+                <div>
+                  <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-2">Distributor Prices</h4>
+                  {Object.entries(showSpecific.distributorPrices || {}).map(([id, price]) => (
+                    <div key={id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm mb-2">
+                       <span className="text-gray-600 dark:text-gray-400 font-medium">{id}</span>
+                       <span className="text-gray-900 dark:text-white font-bold">{formatCurrencyFull(price)}</span>
+                    </div>
+                  ))}
+                  {Object.keys(showSpecific.distributorPrices || {}).length === 0 && <p className="text-xs text-gray-500">No custom distributor prices.</p>}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 mb-2">Farmer Prices</h4>
+                  {Object.entries(showSpecific.farmerPrices || {}).map(([id, price]) => (
+                    <div key={id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm mb-2">
+                       <span className="text-gray-600 dark:text-gray-400 font-medium">{id}</span>
+                       <span className="text-gray-900 dark:text-white font-bold">{formatCurrencyFull(price)}</span>
+                    </div>
+                  ))}
+                  {Object.keys(showSpecific.farmerPrices || {}).length === 0 && <p className="text-xs text-gray-500">No custom farmer prices.</p>}
+                </div>
+              </div>
+              <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                <button onClick={() => setShowSpecific(null)} className="w-full btn-primary py-2.5">Close</button>
               </div>
             </motion.div>
           </motion.div>

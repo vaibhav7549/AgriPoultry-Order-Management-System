@@ -14,16 +14,18 @@ export default function BulkOrdering() {
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState('catalog');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
-  const subtotal = bulkDraft.reduce((acc, item) => acc + (item.basePrice * item.qty), 0);
+  const subtotal = bulkDraft.reduce((acc, item) => acc + ((item.suggestedDistributorPrice || item.basePrice || 0) * item.qty), 0);
   const gst = Math.round(subtotal * 0.05);
   const grandTotal = subtotal + gst;
 
   const handleAddToCart = (product) => {
     const defaultQty = product.category === 'Feed' ? 10 : product.category === 'Chicks' ? 500 : 5;
-    addToBulkDraft({ ...product, qty: defaultQty });
+    addToBulkDraft({ ...product, basePrice: product.suggestedDistributorPrice || product.basePrice, qty: defaultQty });
     addToast(`${product.name} added to draft`, 'success');
   };
 
@@ -54,35 +56,54 @@ export default function BulkOrdering() {
       {activeTab === 'catalog' ? (
         <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
           {/* Product catalog */}
-          <div className="w-full lg:w-2/3 overflow-y-auto scrollbar-custom pr-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {PRODUCTS.map(product => {
-                const inDraft = bulkDraft.find(d => d.id === product.id);
-                return (
-                  <div key={product.id} className="card-static p-4 flex flex-col justify-between group">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="text-3xl group-hover:scale-110 transition-transform">{product.emoji}</div>
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">{product.category}</span>
-                    </div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">{product.name}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{product.description}</p>
-                    <div className="flex items-end justify-between mt-3">
-                      <p className="text-green-600 dark:text-green-400 font-bold text-lg">
-                        {formatCurrencyFull(product.basePrice)} <span className="text-xs font-normal text-gray-500">/{product.unit}</span>
-                      </p>
-                      {inDraft ? (
-                        <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 rounded-lg px-1">
-                          <button onClick={() => updateDraftQty(product.id, inDraft.qty - 1)} className="p-1 text-green-600 hover:bg-green-100 rounded"><Minus size={14} /></button>
-                          <span className="w-8 text-center text-sm font-bold text-green-700 dark:text-green-400">{inDraft.qty}</span>
-                          <button onClick={() => updateDraftQty(product.id, inDraft.qty + 1)} className="p-1 text-green-600 hover:bg-green-100 rounded"><Plus size={14} /></button>
+          <div className="w-full lg:w-2/3 flex flex-col gap-4 overflow-hidden">
+            <div className="flex gap-2 shrink-0">
+               <div className="relative flex-1">
+                 <PackageSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                 <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search products..." className="pl-8 pr-3 py-2 input-base text-sm w-full" />
+               </div>
+               <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input-base text-sm w-auto shrink-0">
+                 <option value="All">All Categories</option>
+                 <option value="Feed">Feed</option>
+                 <option value="Chicks">Chicks</option>
+                 <option value="Healthcare">Healthcare</option>
+               </select>
+            </div>
+            <div className="flex-1 overflow-y-auto scrollbar-custom pr-1 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {PRODUCTS.filter(p => (categoryFilter === 'All' || p.category === categoryFilter) && (!searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))).map(product => {
+                  const inDraft = bulkDraft.find(d => d.id === product.id);
+                  return (
+                    <div key={product.id} className="card-static p-4 flex flex-col justify-between group">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="text-3xl group-hover:scale-110 transition-transform">{product.emoji}</div>
+                        <span className="text-xs font-semibold px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">{product.category}</span>
+                      </div>
+                      <h3 className="font-bold text-gray-900 dark:text-white">{product.name}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{product.description}</p>
+                      <div className="flex items-end justify-between mt-3">
+                        <div>
+                          <p className="text-green-600 dark:text-green-400 font-bold text-lg leading-tight">
+                            {formatCurrencyFull(product.suggestedDistributorPrice || product.basePrice)} <span className="text-xs font-normal text-gray-500">/{product.unit} (Dist)</span>
+                          </p>
+                          <p className="text-sm font-medium text-gray-500 mt-0.5">
+                            {formatCurrencyFull(product.suggestedFarmerPrice || product.distPrice)} <span className="text-xs font-normal">/{product.unit} (Farmer)</span>
+                          </p>
                         </div>
-                      ) : (
-                        <button onClick={() => handleAddToCart(product)} className="text-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-500 hover:text-white p-2 rounded-lg transition-all"><Plus size={18} /></button>
-                      )}
+                        {inDraft ? (
+                          <div className="flex items-center gap-1 bg-green-50 dark:bg-green-900/30 rounded-lg px-1 shrink-0">
+                            <button onClick={() => updateDraftQty(product.id, inDraft.qty - 1)} className="p-1 text-green-600 hover:bg-green-100 rounded"><Minus size={14} /></button>
+                            <span className="w-8 text-center text-sm font-bold text-green-700 dark:text-green-400">{inDraft.qty}</span>
+                            <button onClick={() => updateDraftQty(product.id, inDraft.qty + 1)} className="p-1 text-green-600 hover:bg-green-100 rounded"><Plus size={14} /></button>
+                          </div>
+                        ) : (
+                          <button onClick={() => handleAddToCart(product)} className="text-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-500 hover:text-white p-2 rounded-lg transition-all shrink-0"><Plus size={18} /></button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -105,14 +126,14 @@ export default function BulkOrdering() {
                     <div key={item.id} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{item.name}</p>
-                        <p className="text-xs text-gray-500">{formatCurrencyFull(item.basePrice)} × {item.qty}</p>
+                        <p className="text-xs text-gray-500">{formatCurrencyFull(item.suggestedDistributorPrice || item.basePrice)} × {item.qty}</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <button onClick={() => updateDraftQty(item.id, item.qty - 1)} className="p-0.5 text-gray-400 hover:text-gray-600 rounded"><Minus size={12} /></button>
                         <span className="w-6 text-center text-xs font-bold">{item.qty}</span>
                         <button onClick={() => updateDraftQty(item.id, item.qty + 1)} className="p-0.5 text-gray-400 hover:text-gray-600 rounded"><Plus size={12} /></button>
                       </div>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white w-20 text-right">{formatCurrencyFull(item.basePrice * item.qty)}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white w-20 text-right">{formatCurrencyFull((item.suggestedDistributorPrice || item.basePrice) * item.qty)}</p>
                       <button onClick={() => removeDraftItem(item.id)} className="p-1 text-gray-400 hover:text-red-500"><X size={14} /></button>
                     </div>
                   ))}

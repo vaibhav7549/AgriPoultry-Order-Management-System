@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useStore } from '../lib/store';
 import { useToast } from '../context/ToastContext';
 import { Plus, X, Search, Eye, MoreVertical, CheckCircle, XCircle, Clock, ChevronRight } from 'lucide-react';
@@ -16,7 +17,8 @@ export default function FarmerOrders() {
 
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const location = useLocation();
+  const [statusFilter, setStatusFilter] = useState(location.state?.statusFilter || 'All');
   const [productFilter, setProductFilter] = useState('All');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [viewOrder, setViewOrder] = useState(null);
@@ -61,7 +63,7 @@ export default function FarmerOrders() {
   const timelineSteps = [
     { label: 'Placed', icon: <Clock size={14} />, date: viewOrder?.date },
     { label: 'Accepted', icon: <CheckCircle size={14} />, date: viewOrder?.status !== 'Cancelled' && viewOrder?.status !== 'Pending' ? viewOrder?.date : null },
-    { label: 'Fulfilled', icon: <CheckCircle size={14} />, date: viewOrder?.status === 'Fulfilled' ? viewOrder?.date : null },
+    { label: 'Delivered', icon: <CheckCircle size={14} />, date: viewOrder?.status === 'Delivered' ? viewOrder?.date : null },
   ];
 
   if (loading) return <div className="space-y-4"><div className="h-12 skeleton w-1/3" /><div className="h-96 skeleton" /></div>;
@@ -87,7 +89,9 @@ export default function FarmerOrders() {
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-base w-auto text-sm py-2">
             <option value="All">All Status</option>
             <option value="Pending">Pending</option>
-            <option value="Fulfilled">Fulfilled</option>
+            <option value="Processing">Processing</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
             <option value="Cancelled">Cancelled</option>
           </select>
           <select value={productFilter} onChange={e => setProductFilter(e.target.value)} className="input-base w-auto text-sm py-2">
@@ -126,7 +130,7 @@ export default function FarmerOrders() {
                         <button onClick={() => { setViewOrder(order); setMenuOpen(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"><Eye size={14} /> View Details</button>
                         {order.status === 'Pending' && (
                           <>
-                            <button onClick={() => { updateFarmerOrderStatus(order.id, 'Fulfilled'); addToast('Order marked as fulfilled', 'success'); setMenuOpen(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50"><CheckCircle size={14} /> Mark Fulfilled</button>
+                            <button onClick={() => { updateFarmerOrderStatus(order.id, 'Delivered'); addToast('Order marked as delivered', 'success'); setMenuOpen(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50"><CheckCircle size={14} /> Mark Delivered</button>
                             <button onClick={() => { updateFarmerOrderStatus(order.id, 'Cancelled'); addToast('Order cancelled', 'warning'); setMenuOpen(null); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"><XCircle size={14} /> Cancel</button>
                           </>
                         )}

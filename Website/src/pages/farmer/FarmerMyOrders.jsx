@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useStore } from '../../lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { formatCurrencyFull, formatDate, getStatusColor } from '../../utils/helpers';
-import { Search, Filter, Box, X } from 'lucide-react';
+import { exportToCSV } from '../../utils/exportUtils';
+import { Search, Filter, Box, X, Download, RefreshCw } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 export default function FarmerMyOrders() {
-  const { farmerPortalOrders } = useStore();
+  const { farmerPortalOrders, addToFarmerDraft } = useStore();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+  const [statusFilter, setStatusFilter] = useState(location.state?.statusFilter || 'All');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
@@ -16,8 +24,34 @@ export default function FarmerMyOrders() {
   const filteredOrders = farmerPortalOrders.filter(order => {
     const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesDate = !dateFilter || order.date === dateFilter;
+    return matchesSearch && matchesStatus && matchesDate;
   });
+
+  const handleExport = () => {
+    const exportData = filteredOrders.map(o => ({
+      'Order ID': o.id,
+      Date: formatDate(o.date),
+      Items: o.items?.length || 0,
+      'Total Amount': o.totalValue,
+      Status: o.status
+    }));
+    exportToCSV(exportData, 'My_Orders');
+  };
+
+  const handleReorder = (order) => {
+    order.items?.forEach(item => {
+      addToFarmerDraft({
+        id: `p-${item.product.toLowerCase().replace(/\s+/g, '-')}`,
+        name: item.product,
+        qty: item.qty,
+        distributorPrice: item.price,
+        category: 'Feed'
+      });
+    });
+    addToast('Items added to cart for reorder!', 'success');
+    navigate('/farmer/order');
+  };
 
   if (loading) return <div className="space-y-4"><div className="h-12 skeleton w-1/4" /><div className="h-64 skeleton" /></div>;
 
@@ -40,14 +74,17 @@ export default function FarmerMyOrders() {
             />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Filter size={18} className="text-gray-400" />
+            <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="input-base py-2 text-sm w-full sm:w-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700" />
+            <Filter size={18} className="text-gray-400 shrink-0" />
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-base py-2 text-sm w-full sm:w-auto bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700">
               <option value="All">All Status</option>
               <option value="Pending">Pending</option>
               <option value="Processing">Processing</option>
               <option value="Dispatched">Dispatched</option>
               <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
+            <button onClick={handleExport} className="btn-outline flex items-center gap-1 text-sm py-2 px-3"><Download size={14} /> <span className="hidden sm:inline">Export</span></button>
           </div>
         </div>
 
@@ -127,7 +164,10 @@ export default function FarmerMyOrders() {
                   <span className="text-gray-600 dark:text-gray-400 font-medium">Total Amount</span>
                   <span className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrencyFull(selectedOrder.totalValue)}</span>
                 </div>
-                <button onClick={() => setSelectedOrder(null)} className="w-full btn-primary py-2.5">Close Details</button>
+                <div className="flex gap-2">
+                  <button onClick={() => setSelectedOrder(null)} className="flex-1 btn-outline py-2.5">Close</button>
+                  <button onClick={() => handleReorder(selectedOrder)} className="flex-1 btn-primary py-2.5 flex justify-center items-center gap-2"><RefreshCw size={16} /> Reorder</button>
+                </div>
               </div>
             </motion.div>
           </>

@@ -3,12 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf, UserCircle, Building2, Eye, EyeOff, Loader2, Wheat } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
-const roles = ['distributor', 'company', 'farmer'];
+const roles = ['farmer', 'distributor', 'company'];
 
 export default function Login() {
-  const [role, setRole] = useState('distributor');
+  const location = useLocation();
+  const [role, setRole] = useState(location.state?.defaultRole || 'farmer');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
