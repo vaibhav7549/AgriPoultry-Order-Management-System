@@ -2,7 +2,7 @@
 
 A digital platform to simplify and automate the ordering process of poultry feed and chicks between farmers, distributors, and companies.
 
-Farmers, distributors, and companies process and deliver products — all in one centralized system. A **web dashboard** (React) provides everyone with real-time analytics, order management, and financial tracking. The platform also handles multi-level pricing and tracks distributor profit automatically.
+Farmers, distributors, and companies process and deliver products all in one centralized system. A **web dashboard** (React) provides everyone with real-time analytics, order management, and financial tracking. The platform also handles multi-level pricing and tracks distributor profit automatically.
 
 ---
 
