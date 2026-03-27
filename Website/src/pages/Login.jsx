@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Leaf, UserCircle, Building2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Leaf, UserCircle, Building2, Eye, EyeOff, Loader2, Wheat } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useNavigate, Link } from 'react-router-dom';
 
-const roles = ['distributor', 'company'];
+const roles = ['distributor', 'company', 'farmer'];
 
 export default function Login() {
   const [role, setRole] = useState('distributor');
@@ -35,7 +35,11 @@ export default function Login() {
       setLoading(false);
       if (result.success) {
         addToast(`Welcome back, ${result.user.name}!`, 'success');
-        navigate('/dashboard');
+        if (role === 'farmer') {
+          navigate('/farmer/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setError(result.error);
       }
@@ -62,9 +66,18 @@ export default function Login() {
             <Leaf size={48} className="text-amber-300" />
             <h1 className="text-5xl font-heading font-bold tracking-tight">AgriPoultry</h1>
           </div>
-          <p className="text-lg text-green-100 max-w-md mx-auto">
-            The smart supply chain order management system connecting farmers, distributors, and the core company.
-          </p>
+          {role === 'farmer' ? (
+            <div className="flex flex-col items-center gap-3">
+              <span className="px-3 py-1 bg-amber-500 text-amber-50 text-xs font-bold uppercase tracking-wider rounded-full">Farmer Portal</span>
+              <p className="text-lg text-green-100 max-w-md mx-auto">
+                Order feed and chicks for your farm directly from your distributor.
+              </p>
+            </div>
+          ) : (
+            <p className="text-lg text-green-100 max-w-md mx-auto">
+              The smart supply chain order management system connecting farmers, distributors, and the core company.
+            </p>
+          )}
         </motion.div>
       </div>
 
@@ -91,8 +104,8 @@ export default function Login() {
                   onClick={() => { setRole(r); setError(''); }}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium transition-all duration-200 relative z-10 ${role === r ? 'text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
                 >
-                  {r === 'distributor' ? <UserCircle size={18} /> : <Building2 size={18} />}
-                  {r === 'distributor' ? 'Distributor' : 'Company'}
+                  {r === 'distributor' ? <UserCircle size={18} /> : r === 'company' ? <Building2 size={18} /> : <Wheat size={18} />}
+                  {r === 'distributor' ? 'Distributor' : r === 'company' ? 'Company' : 'Farmer'}
                   {role === r && (
                     <motion.div
                       layoutId="activeRoleLogin"
@@ -152,7 +165,7 @@ export default function Login() {
                   />
                   <span className="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
                 </label>
-                <Link to="/forgot-password" className="text-sm font-medium text-green-600 dark:text-green-400 hover:underline">
+                <Link to={role === 'farmer' ? "/farmer/forgot-password" : "/forgot-password"} className="text-sm font-medium text-green-600 dark:text-green-400 hover:underline">
                   Forgot Password?
                 </Link>
               </div>
@@ -168,7 +181,9 @@ export default function Login() {
 
             <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
               Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-green-600 dark:text-green-400 hover:underline">Create Account</Link>
+              <Link to={role === 'farmer' ? "/farmer/register" : "/register"} className="font-medium text-green-600 dark:text-green-400 hover:underline">
+                {role === 'farmer' ? "Register as Farmer" : "Create Account"}
+              </Link>
             </p>
           </div>
 

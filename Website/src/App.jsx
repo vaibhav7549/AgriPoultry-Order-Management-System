@@ -11,6 +11,16 @@ import NotFound from './pages/NotFound';
 // Layout
 import DashboardLayout from './components/DashboardLayout';
 
+// Farmer Portal Sub-layout & Pages
+import FarmerLayout from './components/farmer/FarmerLayout';
+import FarmerDashboard from './pages/farmer/FarmerDashboard';
+import FarmerPlaceOrder from './pages/farmer/FarmerPlaceOrder';
+import FarmerMyOrders from './pages/farmer/FarmerMyOrders';
+import FarmerProfile from './pages/farmer/FarmerProfile';
+import FarmerSettings from './pages/farmer/FarmerSettings';
+import FarmerRegister from './pages/farmer/FarmerRegister';
+import FarmerForgotPassword from './pages/farmer/FarmerForgotPassword';
+
 // Dashboards
 import DistributorDashboard from './pages/DistributorDashboard';
 import CompanyDashboard from './pages/CompanyDashboard';
@@ -50,6 +60,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/farmer/register" element={<FarmerRegister />} />
+      <Route path="/farmer/forgot-password" element={<FarmerForgotPassword />} />
 
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
@@ -73,6 +85,17 @@ function App() {
             <Route path="/product-master" element={<ProductMaster />} />
             <Route path="/distributor-ledger" element={<DistributorLedger />} />
           </Route>
+        </Route>
+      </Route>
+
+      {/* Farmer Portal Routes */}
+      <Route path="/farmer" element={<ProtectedRoute allowedRoles={['farmer']} />}>
+        <Route element={<FarmerLayout />}>
+          <Route path="dashboard" element={<FarmerDashboard />} />
+          <Route path="place-order" element={<FarmerPlaceOrder />} />
+          <Route path="my-orders" element={<FarmerMyOrders />} />
+          <Route path="profile" element={<FarmerProfile />} />
+          <Route path="settings" element={<FarmerSettings />} />
         </Route>
       </Route>
 

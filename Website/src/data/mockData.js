@@ -11,6 +11,12 @@ export const DUMMY_USERS = [
   // Companies
   { id: 'C001', username: 'agripoultry_corp', phone: '9000000001', password: 'admin@123', role: 'company', name: 'AgriPoultry Corp', company: 'AgriPoultry Corp Pvt Ltd', email: 'admin@agripoultry.com', address: 'HQ, Industrial Area, Sangli', avatar: 'A', department: 'Operations' },
   { id: 'C002', username: 'poultry_manager', phone: '9000000002', password: 'manager@123', role: 'company', name: 'Poultry Manager', company: 'AgriPoultry Corp Pvt Ltd', email: 'manager@agripoultry.com', address: 'Branch Office, Kolhapur', avatar: 'P', department: 'Sales' },
+  // Farmers
+  { id: "F001", username: "ramu_kaka", phone: "9876501234", password: "ramu@123", role: "farmer", name: "Ramu Kaka", village: "Shirol", taluka: "Shirol", district: "Kolhapur", state: "Maharashtra", assignedDistributorId: "D001", assignedDistributorName: "Demo Distributor", email: "ramu@farm.com", avatar: "R", totalOrders: 12, activeOrders: 1 },
+  { id: "F002", username: "suresh_patil", phone: "9123401234", password: "suresh@123", role: "farmer", name: "Suresh Patil", village: "Kagal", taluka: "Kagal", district: "Kolhapur", state: "Maharashtra", assignedDistributorId: "D001", assignedDistributorName: "Demo Distributor", email: "suresh@farm.com", avatar: "S", totalOrders: 8, activeOrders: 0 },
+  { id: "F003", username: "anita_more", phone: "9988001234", password: "anita@123", role: "farmer", name: "Anita More", village: "Ichalkaranji", taluka: "Hatkanangle", district: "Kolhapur", state: "Maharashtra", assignedDistributorId: "D002", assignedDistributorName: "Ravi Supplies", email: "anita@farm.com", avatar: "A", totalOrders: 5, activeOrders: 2 },
+  { id: "F004", username: "vijay_jadhav", phone: "9765001234", password: "vijay@123", role: "farmer", name: "Vijay Jadhav", village: "Nandani", taluka: "Karveer", district: "Kolhapur", state: "Maharashtra", assignedDistributorId: "D001", assignedDistributorName: "Demo Distributor", email: "vijay@farm.com", avatar: "V", totalOrders: 20, activeOrders: 3 },
+  { id: "F005", username: "meena_chavan", phone: "9654001234", password: "meena@123", role: "farmer", name: "Meena Chavan", village: "Peth Vadgaon", taluka: "Hatkananagale", district: "Kolhapur", state: "Maharashtra", assignedDistributorId: "D003", assignedDistributorName: "City Hatcheries", email: "meena@farm.com", avatar: "M", totalOrders: 3, activeOrders: 1 }
 ];
 
 // --- PRODUCTS ---
@@ -203,4 +209,28 @@ export const COMPANY_TRANSACTIONS = [
   { id: 'CT-006', date: '2026-03-19', orderId: 'BO-2008', orderAmount: 160000, amountPaid: 80000, paymentMode: 'UPI', balanceDue: 80000, status: 'Partial', distributorId: 'D002' },
   { id: 'CT-007', date: '2026-03-18', orderId: 'BO-2009', orderAmount: 210000, amountPaid: 210000, paymentMode: 'NEFT', balanceDue: 0, status: 'Paid', distributorId: 'D003' },
   { id: 'CT-008', date: '2026-03-17', orderId: 'BO-2010', orderAmount: 320000, amountPaid: 320000, paymentMode: 'Cash', balanceDue: 0, status: 'Paid', distributorId: 'D001' },
+];
+
+// --- FARMER PORTAL ORDERS (Farmer-facing orders) ---
+export const FARMER_PORTAL_ORDERS = [
+  { id: "FO-3001", farmerId: "F001", product: "Premium Feed", qty: 50, unitPrice: 500, amount: 25000, date: "2026-03-20", status: "Pending", notes: "Please deliver before month end" },
+  { id: "FO-3002", farmerId: "F001", product: "Layer Chicks", qty: 200, unitPrice: 40, amount: 8000, date: "2026-03-10", status: "Fulfilled", deliveredDate: "2026-03-14" },
+  { id: "FO-3003", farmerId: "F001", product: "Starter Feed", qty: 30, unitPrice: 1000, amount: 30000, date: "2026-02-28", status: "Shipped" },
+  { id: "FO-3004", farmerId: "F001", product: "Broiler Chicks", qty: 100, unitPrice: 32, amount: 3200, date: "2026-02-15", status: "Fulfilled" },
+  { id: "FO-3005", farmerId: "F001", product: "Finisher Feed", qty: 20, unitPrice: 1300, amount: 26000, date: "2026-01-30", status: "Fulfilled" },
+  { id: "FO-3006", farmerId: "F001", product: "Vaccine Pack", qty: 5, unitPrice: 250, amount: 1250, date: "2026-01-10", status: "Cancelled" },
+  // Example for F002 & F003
+  { id: "FO-3007", farmerId: "F002", product: "Starter Feed", qty: 10, unitPrice: 1000, amount: 10000, date: "2026-03-25", status: "Pending" },
+  { id: "FO-3008", farmerId: "F002", product: "Layer Chicks", qty: 100, unitPrice: 40, amount: 4000, date: "2026-03-15", status: "Fulfilled", deliveredDate: "2026-03-18" },
+  { id: "FO-3009", farmerId: "F003", product: "Broiler Chicks", qty: 50, unitPrice: 32, amount: 1600, date: "2026-03-22", status: "Pending" },
+];
+
+// --- PRODUCTS FOR FARMERS (Displaying distributor prices) ---
+export const PRODUCTS_FOR_FARMERS = [
+  { id: 'p1', name: 'Starter Feed', category: 'Feed', unit: 'bags', unitPrice: 1200, emoji: '🌾', stock: 'In Stock', description: 'Nutritious starter feed for young chicks (0-4 weeks)' },
+  { id: 'p2', name: 'Finisher Feed', category: 'Feed', unit: 'bags', unitPrice: 1500, emoji: '🌾', stock: 'Low Stock', description: 'High-protein finisher feed for market-ready birds' },
+  { id: 'p3', name: 'Broiler Chicks', category: 'Chicks', unit: 'chicks', unitPrice: 40, emoji: '🐣', stock: 'Low Stock', description: 'Day-old broiler chicks, vaccinated and healthy' },
+  { id: 'p4', name: 'Layer Chicks', category: 'Chicks', unit: 'chicks', unitPrice: 50, emoji: '🐥', stock: 'In Stock', description: 'Day-old layer chicks for egg production' },
+  { id: 'p5', name: 'Premium Feed', category: 'Feed', unit: 'bags', unitPrice: 650, emoji: '🌿', stock: 'In Stock', description: 'Organic premium feed blend with added minerals' },
+  { id: 'p6', name: 'Vaccine Pack', category: 'Healthcare', unit: 'packs', unitPrice: 320, emoji: '💉', stock: 'In Stock', description: 'Complete vaccination kit for poultry flocks' },
 ];

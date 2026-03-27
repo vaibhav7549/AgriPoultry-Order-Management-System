@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DISTRIBUTOR_ORDERS, BULK_ORDERS, PRODUCTS, TRANSACTIONS, NOTIFICATIONS, FARMERS } from '../data/mockData';
+import { DISTRIBUTOR_ORDERS, BULK_ORDERS, PRODUCTS, TRANSACTIONS, NOTIFICATIONS, FARMERS, FARMER_PORTAL_ORDERS, PRODUCTS_FOR_FARMERS } from '../data/mockData';
 
 export const useStore = create((set, get) => ({
   // --- Farmer Orders (Distributor) ---
@@ -80,4 +80,41 @@ export const useStore = create((set, get) => ({
   markAllNotificationsRead: () => set((state) => ({
     notifications: state.notifications.map(n => ({ ...n, read: true }))
   })),
+
+  // --- Farmer Portal ---
+  farmerPortalOrders: FARMER_PORTAL_ORDERS,
+  farmerDraft: [],
+  addToFarmerDraft: (item) => set((state) => {
+    const existing = state.farmerDraft.find(i => i.id === item.id);
+    if (existing) {
+      return { farmerDraft: state.farmerDraft.map(i => i.id === item.id ? { ...i, qty: i.qty + (item.qty || 1) } : i) };
+    }
+    return { farmerDraft: [...state.farmerDraft, { ...item, qty: item.qty || 1 }] };
+  }),
+  updateFarmerDraftQty: (itemId, qty) => set((state) => ({
+    farmerDraft: qty <= 0
+      ? state.farmerDraft.filter(i => i.id !== itemId)
+      : state.farmerDraft.map(i => i.id === itemId ? { ...i, qty } : i)
+  })),
+  removeFarmerDraftItem: (itemId) => set((state) => ({
+    farmerDraft: state.farmerDraft.filter(i => i.id !== itemId)
+  })),
+  clearFarmerDraft: () => set({ farmerDraft: [] }),
+  submitFarmerDraft: (farmerId, farmerName) => set((state) => {
+    const totalValue = state.farmerDraft.reduce((acc, item) => acc + (item.distributorPrice * item.qty), 0);
+    const newOrder = {
+      id: `FPO-${3000 + state.farmerPortalOrders.length + 1}`,
+      farmerId: farmerId || 'F001',
+      date: new Date().toISOString().split('T')[0],
+      items: state.farmerDraft.map(i => ({ product: i.name, qty: i.qty, price: i.distributorPrice })),
+      totalValue: totalValue,
+      status: 'Pending',
+    };
+    // Note: In an ideal app, this order would also sync back into the `farmerOrders` (Distributor bucket)
+    // using addFarmerOrder, but since they have different data structures in the mock, we manage them independently for UI demonstration.
+    return {
+      farmerDraft: [],
+      farmerPortalOrders: [newOrder, ...state.farmerPortalOrders],
+    };
+  }),
 }));

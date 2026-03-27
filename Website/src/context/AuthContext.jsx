@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
     if (exists) return { success: false, error: 'Username or phone already registered' };
     
     const newUser = {
-      id: `${userData.role === 'distributor' ? 'D' : 'C'}${String(users.length + 1).padStart(3, '0')}`,
+      id: `${userData.role === 'distributor' ? 'D' : userData.role === 'farmer' ? 'F' : 'C'}${String(users.length + 1).padStart(3, '0')}`,
       avatar: userData.name?.charAt(0)?.toUpperCase() || 'U',
       ...userData,
     };
