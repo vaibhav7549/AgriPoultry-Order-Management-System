@@ -2,7 +2,7 @@
 
 A digital platform to simplify and automate the ordering process of poultry feed and chicks between farmers, distributors, and companies.
 
-Farmers place orders through a **mobile app** (Flutter), distributors manage and combine those orders into bulk purchases, and companies process and deliver products — all in one centralized system. A **web dashboard** (React) provides distributors and companies with analytics, order management, and financial tracking. The platform also handles multi-level pricing and tracks distributor profit automatically.
+Farmers place orders through a **mobile app** (Flutter) and a **web portal**, distributors manage and combine those orders into bulk purchases, and companies process and deliver products — all in one centralized system. A **web dashboard** (React) provides farmers, distributors, and companies with real-time analytics, order management, and financial tracking. The platform also handles multi-level pricing and tracks distributor profit automatically.
 
 ---
 
@@ -28,10 +28,10 @@ Farmers place orders through a **mobile app** (Flutter), distributors manage and
 
 | Module | Highlights |
 |--------|-----------|
-| **Farmer App** | Place orders, view order history, make payments |
-| **Distributor Dashboard** | Manage farmer orders, bulk purchasing, inventory & ledger |
-| **Company Dashboard** | Process distributor orders, product catalog, financial tracking |
-| **Database** | Multi-level pricing, payment tracking, ledger system |
+| **Farmer App / Portal** | Place orders, view order history, make payments, dynamic pricing |
+| **Distributor Dashboard** | Manage farmer orders, bulk purchasing, inventory & ledger, margin tracking |
+| **Company Dashboard** | Process distributor orders, product catalog, financial tracking, live feed |
+| **Database** | Multi-level pricing (distributor & farmer), payment tracking, ledger system |
 
 ---
 
@@ -168,13 +168,27 @@ flutter build apk --release
 
 ## 🔐 Demo Credentials
 
-The app currently uses dummy authentication for demonstration purposes.
+The app currently uses dummy authentication for demonstration purposes via the `mockData.js` context state.
 
-| Role | Login |
-|------|-------|
-| Distributor | Access via web dashboard |
-| Company | Access via web dashboard |
-| Farmer | Access via mobile app |
+### 👨‍🌾 Farmer Portal
+| Username | Password |
+| :--- | :--- |
+| `ramu_kaka` | `ramu@123` |
+| `suresh_patil` | `suresh@123` |
+| `anita_more` | `anita@123` |
+
+### 🚚 Distributor Portal
+| Username | Password |
+| :--- | :--- |
+| `demo_distributor` | `dist@123` |
+| `ravi_dist` | `ravi@123` |
+| `city_hatch` | `city@123` |
+
+### 🏢 Company Portal
+| Username | Password |
+| :--- | :--- |
+| `agripoultry_corp` | `admin@123` |
+| `poultry_manager` | `manager@123` |
 
 ---
 
