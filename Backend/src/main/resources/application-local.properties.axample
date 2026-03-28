@@ -1,0 +1,10 @@
+spring.datasource.username=root
+spring.datasource.password=YOUR_PASSWORD_HERE
+```
+
+---
+
+**`.gitignore`** (add these 2 lines at the very bottom of existing file)
+```
+application-local.properties
+*.env
