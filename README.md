@@ -173,6 +173,69 @@ Add screenshots here using:
 
 ---
 
+## 🚀 Backend Setup (Spring Boot)
+
+### Prerequisites
+- Java 21 (recommended) — [Download](https://adoptium.net)
+- MySQL 8.x
+- Maven (bundled via `./mvnw`, no install needed)
+
+### Steps
+
+**1. Clone the repo**
+```bash
+git clone https://github.com/vaibhav7549/AgriPoultry-Order-Management-System.git
+cd AgriPoultry-Order-Management-System/Backend
+```
+
+**2. Set up the database**
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS AGRI_POULTRY;"
+mysql -u root -p AGRI_POULTRY < ../schema.sql
+```
+
+**3. Create your local properties file**
+```bash
+cp src/main/resources/application-local.properties.axample src/main/resources/application-local.properties
+```
+Then open `application-local.properties` and fill in your own MySQL credentials:
+```properties
+spring.datasource.username=root
+spring.datasource.password=YOUR_PASSWORD_HERE
+```
+
+**4. Run the backend**
+```bash
+./mvnw spring-boot:run
+```
+
+**5. Verify it's working**
+
+Open browser and go to:
+```
+http://localhost:8080/api/users
+```
+You should see `[]` — empty array means connected successfully.
+
+### ⚠️ Important
+- Never commit `application-local.properties` — it's in `.gitignore`
+- Each teammate uses their own local MySQL credentials
+- Backend runs on port `8080`, React frontend on port `5173`
+
+1. Java version — they need Java 21. On Ubuntu:
+sudo apt install openjdk-21-jdk
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+
+2. Solving MySQL Auth issue
+sudo mysql
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'theirpassword';
+FLUSH PRIVILEGES;
+exit;
+
+3. The application-local.properties file — they must create it themselves from the example file. It will never come from GitHub.
+
+
 ## 👥 Team
 
 | Name | Roll No |
