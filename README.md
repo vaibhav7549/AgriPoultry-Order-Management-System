@@ -80,7 +80,7 @@
 | Component | Technology |
 |-----------|-----------|
 | **Framework** | Spring Boot 3.5 |
-| **Language** | Java 17 |
+| **Language** | Java 21 |
 | **ORM** | Spring Data JPA / Hibernate |
 | **Database** | MySQL 8.x |
 | **Build Tool** | Maven (wrapper included) |
@@ -187,7 +187,7 @@ AgriPoultry-Order-Management-System/
 
 | Tool | Version | Download |
 |------|---------|----------|
-| **Java** | 17+ | [adoptium.net](https://adoptium.net) |
+| **Java** | 21+ | [adoptium.net](https://adoptium.net) |
 | **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) |
 | **npm** | 9+ | Comes with Node.js |
 | **MySQL** | 8.x | [mysql.com](https://dev.mysql.com/downloads/) |
