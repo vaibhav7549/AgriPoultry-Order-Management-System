@@ -135,7 +135,7 @@ AgriPoultry-Order-Management-System/
 │   ├── pom.xml
 │   └── mvnw / mvnw.cmd              # Maven wrapper
 │
-├── Website/                          # React SPA
+├── Frontend/                         # React SPA
 │   ├── src/
 │   │   ├── App.jsx                   # Root app with routing
 │   │   ├── main.jsx                  # Entry point
@@ -257,8 +257,8 @@ mvnw.cmd spring-boot:run      # Windows CMD / PowerShell
 ### 4. Frontend (React Dashboard)
 
 ```bash
-# Navigate to the Website directory
-cd Website
+# Navigate to the Frontend directory
+cd Frontend
 
 # Install dependencies
 npm install
