@@ -1,49 +1,32 @@
 package com.agripoultry.controller;
 
-import com.agripoultry.entity.Product;
 import com.agripoultry.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductService productService;
-
-    @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-        return ResponseEntity.ok(productService.createProduct(product));
-    }
+    private final ProductService service;
 
     @GetMapping
-    public ResponseEntity<List<Product>> getProducts(
-            @RequestParam(required = false) Product.ProductType type) {
-        if (type != null) {
-            return ResponseEntity.ok(productService.getProductsByType(type));
-        }
-        return ResponseEntity.ok(productService.getAllProducts());
+    public ResponseEntity<List<Map<String, Object>>> getAll() {
+        return ResponseEntity.ok(service.getAll());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProduct(@PathVariable Integer id) {
-        return ResponseEntity.ok(productService.getProductById(id));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(
+    @PatchMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> update(
             @PathVariable Integer id,
-            @RequestBody Product product) {
-        return ResponseEntity.ok(productService.updateProduct(id, product));
+            @RequestBody Map<String, Object> updates) {
+        return ResponseEntity.ok(service.update(id, updates));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Integer id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> create(@RequestBody Map<String, Object> data) {
+        return ResponseEntity.ok(service.create(data));
     }
 }

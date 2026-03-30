@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../contexts/ThemeContext';
+import api from '../lib/api';
 import { User, Shield, Bell, Palette, Save, Eye, EyeOff, Monitor, Moon, Sun, Smartphone, Globe, UserPlus } from 'lucide-react';
 
 const TABS = [
@@ -46,8 +47,21 @@ export default function Settings() {
     e.preventDefault();
     if (passwords.new_.length < 8) { addToast('Password must be at least 8 characters', 'error'); return; }
     if (passwords.new_ !== passwords.confirm) { addToast('Passwords do not match', 'error'); return; }
-    addToast('Password changed successfully', 'success');
-    setPasswords({ current: '', new_: '', confirm: '' });
+
+    if (!currentUser?.userId) {
+      addToast('User session not found', 'error');
+      return;
+    }
+
+    api.patch(`/users/${currentUser.userId}/change-password`, {
+      currentPassword: passwords.current,
+      newPassword: passwords.new_
+    }).then(() => {
+      addToast('Password changed successfully', 'success');
+      setPasswords({ current: '', new_: '', confirm: '' });
+    }).catch(() => {
+      addToast('Current password is incorrect', 'error');
+    });
   };
 
   const handleApplyTheme = () => {

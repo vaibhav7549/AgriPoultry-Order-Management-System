@@ -1,6 +1,54 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { useStore } from './lib/store';
+
+// Data Hydrator — fetches all backend data when user logs in
+function DataHydrator() {
+  const { currentUser } = useAuth();
+  const store = useStore();
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const userId = currentUser.id;
+    const dbId = currentUser.userId;
+
+    const refresh = () => {
+      if (currentUser.role === 'distributor') {
+        store.fetchFarmerOrders({ distributorId: dbId });
+        store.fetchBulkOrders(userId);
+      } else if (currentUser.role === 'company') {
+        store.fetchBulkOrders();
+      } else if (currentUser.role === 'farmer') {
+        store.fetchFarmerOrders({ farmerId: dbId });
+      }
+    };
+
+    // Initial load
+    if (currentUser.role === 'distributor') {
+      store.fetchFarmerOrders({ distributorId: dbId });
+      store.fetchFarmers(dbId);
+      store.fetchProducts();
+      store.fetchBulkOrders(userId);
+      store.fetchTransactions(userId);
+      store.fetchNotifications(userId);
+    } else if (currentUser.role === 'company') {
+      store.fetchBulkOrders();
+      store.fetchProducts();
+      store.fetchNotifications(userId);
+    } else if (currentUser.role === 'farmer') {
+      store.fetchFarmerOrders({ farmerId: dbId });
+      store.fetchProducts();
+      store.fetchNotifications(userId);
+    }
+
+    // Periodic refresh (live dashboards)
+    const interval = setInterval(refresh, 7000);
+    return () => clearInterval(interval);
+  }, [currentUser?.id]);
+
+  return null;
+}
 
 // Pages
 import Login from './pages/Login';
@@ -54,6 +102,8 @@ function DashboardRoute() {
 
 function App() {
   return (
+    <>
+    <DataHydrator />
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Navigate to="/login" replace />} />
@@ -102,6 +152,7 @@ function App() {
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </>
   );
 }
 

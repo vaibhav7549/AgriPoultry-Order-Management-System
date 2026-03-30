@@ -3,10 +3,16 @@ import { Store, PackageSearch, Truck, IndianRupee, BellRing } from 'lucide-react
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { LIVE_FEED_EVENTS, MONTHLY_REVENUE, TOP_DISTRIBUTORS } from '../data/mockData';
+import { LIVE_FEED_EVENTS } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
+import { useStore } from '../lib/store';
+import { formatCurrencyFull } from '../utils/helpers';
 
 export default function CompanyDashboard() {
   const navigate = useNavigate();
+  const { users } = useAuth();
+  const kanbanOrders = useStore(s => s.kanbanOrders) || [];
+  
   const [loading, setLoading] = useState(true);
   const [feedIdx, setFeedIdx] = useState(0);
   const [visibleFeeds, setVisibleFeeds] = useState(LIVE_FEED_EVENTS.slice(0, 6));
@@ -38,6 +44,47 @@ export default function CompanyDashboard() {
     return 'bg-gray-400';
   };
 
+  // Dynamic Metrics
+  const activeDistributors = (users || []).filter(u => u.role === 'distributor').length;
+  const pendingBulkOrders = kanbanOrders.filter(o => o.status === 'New Orders' || o.status === 'Processing').length;
+  
+  const unitsShipped = kanbanOrders
+    .filter(o => o.status === 'Dispatched' || o.status === 'Delivered')
+    .reduce((acc, o) => acc + (o.items?.reduce((iAcc, item) => iAcc + (item.qty || 0), 0) || 0), 0);
+  const unitsShippedDisplay = unitsShipped > 1000 ? (unitsShipped / 1000).toFixed(1) + 'k' : unitsShipped.toString();
+  
+  const grossRevenue = kanbanOrders
+    .filter(o => o.status === 'Delivered')
+    .reduce((acc, o) => acc + (o.totalValue || 0), 0);
+
+  // Dynamic Charts
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dynamicMonthlyRevenueArray = Array.from({length: 6}, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    const yearMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const monthOrders = kanbanOrders.filter(o => o.date && o.date.startsWith(yearMonth));
+    return {
+      month: monthNames[d.getMonth()],
+      revenue: monthOrders.reduce((acc, o) => acc + (o.totalValue || 0), 0) 
+    };
+  });
+
+  const distVolume = kanbanOrders.reduce((acc, o) => {
+    const name = o.distributorName || 'Unknown';
+    acc[name] = (acc[name] || 0) + (o.totalValue || 0);
+    return acc;
+  }, {});
+  
+  const dynamicTopDistributors = Object.keys(distVolume)
+    .map(name => ({ name, volume: distVolume[name] }))
+    .sort((a, b) => b.volume - a.volume)
+    .slice(0, 4);
+
+  if (dynamicTopDistributors.length === 0) {
+    dynamicTopDistributors.push({ name: 'No data', volume: 0 });
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -60,10 +107,10 @@ export default function CompanyDashboard() {
       {/* Stat Cards */}
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Active Distributors', value: '48', icon: <Store size={24} />, bg: 'bg-indigo-50 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400', path: '/distributor-ledger' },
-          { label: 'Pending Bulk Orders', value: '14', icon: <PackageSearch size={24} />, bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', path: '/kanban-fulfillment' },
-          { label: 'Units Shipped YTD', value: '1.2M+', icon: <Truck size={24} />, bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400', path: '/kanban-fulfillment' },
-          { label: 'Gross Revenue YTD', value: '₹45.2M', icon: <IndianRupee size={24} />, bg: 'bg-green-50 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400', path: '/distributor-ledger' },
+          { label: 'Active Distributors', value: activeDistributors.toString(), icon: <Store size={24} />, bg: 'bg-indigo-50 dark:bg-indigo-900/30', text: 'text-indigo-600 dark:text-indigo-400', path: '/distributor-ledger' },
+          { label: 'Pending Bulk Orders', value: pendingBulkOrders.toString(), icon: <PackageSearch size={24} />, bg: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', path: '/kanban-fulfillment' },
+          { label: 'Units Shipped YTD', value: unitsShippedDisplay, icon: <Truck size={24} />, bg: 'bg-blue-50 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400', path: '/kanban-fulfillment' },
+          { label: 'Gross Revenue YTD', value: formatCurrencyFull(grossRevenue), icon: <IndianRupee size={24} />, bg: 'bg-green-50 dark:bg-green-900/30', text: 'text-green-600 dark:text-green-400', path: '/distributor-ledger' },
         ].map((card, i) => (
           <motion.div 
             key={i} 
@@ -113,7 +160,7 @@ export default function CompanyDashboard() {
           <h2 className="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-4">Revenue by Month</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={MONTHLY_REVENUE} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <BarChart data={dynamicMonthlyRevenueArray} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={v => `₹${(v / 1000000).toFixed(0)}M`} />
@@ -128,7 +175,7 @@ export default function CompanyDashboard() {
           <h2 className="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-4">Top Distributors by Volume</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={TOP_DISTRIBUTORS} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
+              <BarChart data={dynamicTopDistributors} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} width={80} />

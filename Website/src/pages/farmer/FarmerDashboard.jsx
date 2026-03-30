@@ -5,11 +5,10 @@ import { ShoppingCart, IndianRupee, Clock, PackageCheck, Phone, MapPin, Building
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrencyFull, getStatusColor, formatDate } from '../../utils/helpers';
-import { DISTRIBUTORS } from '../../data/mockData';
 
 export default function FarmerDashboard() {
-  const { currentUser } = useAuth();
-  const farmerPortalOrders = useStore(s => s.farmerPortalOrders);
+  const { currentUser, users } = useAuth();
+  const farmerOrders = useStore(s => s.farmerOrders);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
@@ -17,13 +16,13 @@ export default function FarmerDashboard() {
 
   // Filter orders specific to this farmer, though mock data doesn't strictly associate all items by ID right now.
   // For UI, we'll just show all from FARMER_PORTAL_ORDERS assuming they belong to the current user as per dummy data.
-  const myOrders = farmerPortalOrders || [];
+  const myOrders = farmerOrders || [];
   
   const pendingCount = myOrders.filter(o => o.status === 'Pending' || o.status === 'Processing').length;
   const deliveredCount = myOrders.filter(o => o.status === 'Delivered').length;
   const totalSpent = myOrders.reduce((acc, o) => acc + o.totalValue, 0);
 
-  const myDistributor = DISTRIBUTORS.find(d => d.id === currentUser?.assignedDistributorId) || DISTRIBUTORS[0];
+  const myDistributor = users?.find(u => u.id === currentUser?.assignedDistributorId);
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -150,8 +149,8 @@ export default function FarmerDashboard() {
           
           <div className="p-5 flex-1 flex flex-col gap-4">
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{myDistributor.name}</h3>
-              <p className="text-sm text-gray-500 flex items-center gap-1 mt-1"><MapPin size={14} /> {myDistributor.region}</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{myDistributor?.name || 'Distributor'}</h3>
+              <p className="text-sm text-gray-500 flex items-center gap-1 mt-1"><MapPin size={14} /> {myDistributor?.region || '-'}</p>
             </div>
             
             <div className="space-y-3 mt-2">
@@ -159,9 +158,17 @@ export default function FarmerDashboard() {
                 <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0"><Phone size={14} /></div>
                 <div>
                   <p className="text-gray-500 text-xs">Contact Number</p>
-                  <p className="font-medium text-gray-900 dark:text-white">+91 98765 43210</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{myDistributor?.phone || '-'}</p>
                 </div>
               </div>
+
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0"><span className="text-xs font-bold">@</span></div>
+                  <div>
+                    <p className="text-gray-500 text-xs">Email</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{myDistributor?.email || '-'}</p>
+                  </div>
+                </div>
               
               <div className="flex items-center gap-3 text-sm">
                 <div className="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0"><Clock size={14} /></div>

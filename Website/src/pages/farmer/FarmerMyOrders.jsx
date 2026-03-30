@@ -9,7 +9,7 @@ import { Search, Filter, Box, X, Download, RefreshCw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
 export default function FarmerMyOrders() {
-  const { farmerPortalOrders, addToFarmerDraft } = useStore();
+  const { farmerOrders, addToFarmerDraft } = useStore();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
@@ -21,7 +21,7 @@ export default function FarmerMyOrders() {
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
-  const filteredOrders = farmerPortalOrders.filter(order => {
+  const filteredOrders = farmerOrders.filter(order => {
     const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
     const matchesDate = !dateFilter || order.date === dateFilter;
@@ -32,22 +32,21 @@ export default function FarmerMyOrders() {
     const exportData = filteredOrders.map(o => ({
       'Order ID': o.id,
       Date: formatDate(o.date),
-      Items: o.items?.length || 0,
-      'Total Amount': o.totalValue,
+      Product: o.product,
+      Qty: o.qty,
+      'Total Amount': o.amount,
       Status: o.status
     }));
     exportToCSV(exportData, 'My_Orders');
   };
 
   const handleReorder = (order) => {
-    order.items?.forEach(item => {
-      addToFarmerDraft({
-        id: `p-${item.product.toLowerCase().replace(/\s+/g, '-')}`,
-        name: item.product,
-        qty: item.qty,
-        distributorPrice: item.price,
-        category: 'Feed'
-      });
+    addToFarmerDraft({
+      id: `p-${order.product?.toLowerCase().replace(/\s+/g, '-')}`,
+      name: order.product,
+      qty: order.qty,
+      distributorPrice: order.unitPrice,
+      category: 'Reordered'
     });
     addToast('Items added to cart for reorder!', 'success');
     navigate('/farmer/order');
@@ -93,7 +92,7 @@ export default function FarmerMyOrders() {
           <table className="w-full text-left min-w-[700px]">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                {['Order ID', 'Date', 'Items', 'Total Amount', 'Status', 'Action'].map(h => (
+                {['Order ID', 'Date', 'Product & Qty', 'Total Amount', 'Status', 'Action'].map(h => (
                   <th key={h} className="py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -103,8 +102,8 @@ export default function FarmerMyOrders() {
                 <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                   <td className="py-3 px-4 text-sm font-semibold text-green-600 dark:text-green-400">{order.id}</td>
                   <td className="py-3 px-4 text-sm text-gray-500 dark:text-gray-400">{formatDate(order.date)}</td>
-                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-300">{order.items?.length || 0} items</td>
-                  <td className="py-3 px-4 text-sm font-bold text-gray-900 dark:text-white">{formatCurrencyFull(order.totalValue)}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-300">{order.qty}x {order.product}</td>
+                  <td className="py-3 px-4 text-sm font-bold text-gray-900 dark:text-white">{formatCurrencyFull(order.amount)}</td>
                   <td className="py-3 px-4"><span className={`badge ${getStatusColor(order.status)}`}>{order.status}</span></td>
                   <td className="py-3 px-4">
                     <button onClick={() => setSelectedOrder(order)} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:underline">View Details</button>
@@ -145,24 +144,38 @@ export default function FarmerMyOrders() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">Ordered Items</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">Ordered Product</h4>
                   <div className="space-y-3">
-                    {selectedOrder.items?.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center p-3 border border-gray-100 dark:border-gray-700 rounded-lg">
-                        <div>
-                          <p className="font-medium text-sm text-gray-900 dark:text-white">{item.product}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.qty} units × {formatCurrencyFull(item.price || 0)}</p>
-                        </div>
-                        <span className="font-bold text-sm text-gray-900 dark:text-white">{formatCurrencyFull((item.price || 0) * item.qty)}</span>
+                    <div className="flex justify-between items-center p-3 border border-gray-100 dark:border-gray-700 rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm text-gray-900 dark:text-white">{selectedOrder.product}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{selectedOrder.qty} units × {formatCurrencyFull(selectedOrder.unitPrice || 0)}</p>
                       </div>
-                    ))}
+                      <span className="font-bold text-sm text-gray-900 dark:text-white">{formatCurrencyFull(selectedOrder.amount)}</span>
+                    </div>
+
+                    {selectedOrder.items?.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">All Items</h5>
+                        <div className="space-y-2">
+                          {selectedOrder.items.map((it, idx) => (
+                            <div key={idx} className="flex justify-between text-sm">
+                              <span className="text-gray-700 dark:text-gray-300">{it.qty}x {it.product}</span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {formatCurrencyFull((it.price || 0) * (it.qty || 0))}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-600 dark:text-gray-400 font-medium">Total Amount</span>
-                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrencyFull(selectedOrder.totalValue)}</span>
+                  <span className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrencyFull(selectedOrder.amount)}</span>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setSelectedOrder(null)} className="flex-1 btn-outline py-2.5">Close</button>

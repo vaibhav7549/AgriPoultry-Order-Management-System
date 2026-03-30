@@ -1,23 +1,112 @@
 import { create } from 'zustand';
-import { DISTRIBUTOR_ORDERS, BULK_ORDERS, PRODUCTS, TRANSACTIONS, NOTIFICATIONS, FARMERS, FARMER_PORTAL_ORDERS, PRODUCTS_FOR_FARMERS } from '../data/mockData';
+import api from './api';
 
 export const useStore = create((set, get) => ({
-  // --- Farmer Orders (Distributor) ---
-  farmerOrders: DISTRIBUTOR_ORDERS,
-  farmers: FARMERS,
-  addFarmerOrder: (order) => set((state) => ({
-    farmerOrders: [{ ...order, id: `FO-${1000 + state.farmerOrders.length + 1}`, status: 'Pending', date: new Date().toISOString().split('T')[0] }, ...state.farmerOrders]
-  })),
-  updateFarmerOrderStatus: (orderId, status) => set((state) => ({
-    farmerOrders: state.farmerOrders.map(o => o.id === orderId ? { ...o, status } : o)
-  })),
-  addFarmer: (farmer) => set((state) => ({
-    farmers: [...state.farmers, { ...farmer, id: `F${String(state.farmers.length + 1).padStart(3, '0')}`, totalOrders: 0 }]
-  })),
-
-  // --- Bulk Draft (Distributor) ---
+  // ─── Data State (initialized empty, fetched from API) ───
+  farmerOrders: [],
+  farmers: [],
   bulkDraft: [],
-  bulkOrderHistory: BULK_ORDERS.filter(o => o.distributorId === 'D001'),
+  bulkOrderHistory: [],
+  kanbanOrders: [],
+  products: [],
+  transactions: [],
+  notifications: [],
+  farmerPortalOrders: [],
+
+  // ─── Data Fetching ───
+  fetchFarmerOrders: async (params) => {
+    try {
+      let url = '/farmer-portal-orders';
+      if (params?.distributorId != null) url += `?distributorId=${params.distributorId}`;
+      else if (params?.farmerId != null) url += `?farmerId=${params.farmerId}`;
+
+      const data = await api.get(url);
+      set({ farmerOrders: data || [] });
+    } catch { /* keep existing */ }
+  },
+
+  fetchFarmers: async (distributorId) => {
+    try {
+      const url = distributorId ? `/users/farmers?distributorId=${distributorId}` : '/users/farmers';
+      const data = await api.get(url);
+      set({ farmers: data || [] });
+    } catch { /* keep existing */ }
+  },
+
+  fetchProducts: async () => {
+    try {
+      const data = await api.get('/products');
+      set({ products: data || [] });
+    } catch { /* keep existing */ }
+  },
+
+  fetchBulkOrders: async (distributorId) => {
+    try {
+      const allData = await api.get('/bulk-orders');
+      set({ kanbanOrders: allData || [] });
+      if (distributorId) {
+        const histData = await api.get(`/bulk-orders?distributorId=${distributorId}`);
+        set({ bulkOrderHistory: histData || [] });
+      } else {
+        set({ bulkOrderHistory: allData || [] });
+      }
+    } catch { /* keep existing */ }
+  },
+
+  fetchTransactions: async (userId) => {
+    try {
+      const url = userId ? `/transactions?userId=${userId}` : '/transactions';
+      const data = await api.get(url);
+      set({ transactions: data || [] });
+    } catch { /* keep existing */ }
+  },
+
+  fetchNotifications: async (userId) => {
+    try {
+      const url = userId ? `/notifications?userId=${userId}` : '/notifications';
+      const data = await api.get(url);
+      set({ notifications: data || [] });
+    } catch { /* keep existing */ }
+  },
+
+  // fetchFarmerPortalOrders is obsolete and unified into fetchFarmerOrders
+
+  // ─── Farmer Orders (Distributor) ───
+  addFarmerOrder: (order) => {
+    const payload = {
+      farmerId: order?.farmerId,
+      totalValue: order?.amount || 0,
+      items: [
+        {
+          product: order?.product,
+          qty: order?.qty,
+          price: order?.unitPrice
+        }
+      ],
+      notes: order?.notes
+    };
+
+    api.post('/farmer-portal-orders', payload).then(saved => {
+      set(s => ({ farmerOrders: [saved, ...s.farmerOrders] }));
+    }).catch(() => {});
+  },
+
+  updateFarmerOrderStatus: (orderId, status) => {
+    set((state) => ({
+      farmerOrders: state.farmerOrders.map(o => o.id === orderId ? { ...o, status } : o)
+    }));
+    api.patch(`/farmer-portal-orders/${orderId}/status`, { status }).then(saved => {
+      set(s => ({ farmerOrders: s.farmerOrders.map(o => o.id === orderId ? saved : o) }));
+    }).catch(() => {});
+  },
+
+  addFarmer: (farmer) => {
+    set((state) => ({
+      farmers: [...state.farmers, { ...farmer, id: `F${String(state.farmers.length + 1).padStart(3, '0')}`, totalOrders: 0 }]
+    }));
+  },
+
+  // ─── Bulk Draft (Distributor) ───
   addToBulkDraft: (item) => set((state) => {
     const existing = state.bulkDraft.find(i => i.id === item.id);
     if (existing) {
@@ -34,55 +123,79 @@ export const useStore = create((set, get) => ({
     bulkDraft: state.bulkDraft.filter(i => i.id !== itemId)
   })),
   clearBulkDraft: () => set({ bulkDraft: [] }),
-  submitBulkDraft: (userName) => set((state) => {
+  submitBulkDraft: (userName) => {
+    const state = get();
+    const user = JSON.parse(localStorage.getItem('agripoultry_user') || '{}');
+    const distributorIdCode = user.id || 'D001';
     const newOrder = {
-      id: `BO-${2000 + state.kanbanOrders.length + 1}`,
-      distributorId: 'D001',
+      distributorId: distributorIdCode,
       distributorName: userName || 'Current Distributor',
-      totalValue: state.bulkDraft.reduce((acc, item) => acc + ((item.distributorPrices?.['D001'] || item.suggestedDistributorPrice || item.basePrice || 0) * item.qty), 0),
+      totalValue: state.bulkDraft.reduce((acc, item) => acc + ((item.suggestedDistributorPrice || item.basePrice || 0) * item.qty), 0),
+      contact: user.phone || '9876543210',
+      items: state.bulkDraft.map(i => ({ product: i.name, qty: i.qty, price: (i.suggestedDistributorPrice || i.basePrice || 0) })),
+    };
+
+    // Optimistic local update
+    const tempOrder = {
+      id: `BO-${2000 + state.kanbanOrders.length + 1}`,
+      ...newOrder,
       status: 'New Orders',
       date: new Date().toISOString().split('T')[0],
-      contact: '9876543210',
-      items: state.bulkDraft.map(i => ({ product: i.name, qty: i.qty, price: (i.distributorPrices?.['D001'] || i.suggestedDistributorPrice || i.basePrice || 0) })),
     };
-    return {
+    set({
       bulkDraft: [],
-      kanbanOrders: [newOrder, ...state.kanbanOrders],
-      bulkOrderHistory: [newOrder, ...state.bulkOrderHistory],
-    };
-  }),
+      kanbanOrders: [tempOrder, ...state.kanbanOrders],
+      bulkOrderHistory: [tempOrder, ...state.bulkOrderHistory],
+    });
 
-  // --- Kanban Orders (Company) ---
-  kanbanOrders: BULK_ORDERS,
-  moveKanbanOrder: (orderId, newStatus) => set((state) => ({
-    kanbanOrders: state.kanbanOrders.map(order =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    )
-  })),
+    // Persist to backend
+    api.post('/bulk-orders', newOrder).then(saved => {
+      set(s => ({
+        kanbanOrders: s.kanbanOrders.map(o => o.id === tempOrder.id ? saved : o),
+        bulkOrderHistory: s.bulkOrderHistory.map(o => o.id === tempOrder.id ? saved : o),
+      }));
+    }).catch(() => {});
+  },
 
-  // --- Products (Company) ---
-  products: PRODUCTS,
+  // ─── Kanban Orders (Company) ───
+  moveKanbanOrder: (orderId, newStatus) => {
+    set((state) => ({
+      kanbanOrders: state.kanbanOrders.map(order =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
+    }));
+    api.patch(`/bulk-orders/${orderId}/status`, { status: newStatus }).catch(() => {});
+  },
+
+  // ─── Products (Company) ───
   updateProduct: (productId, updates) => set((state) => ({
     products: state.products.map(p => p.id === productId ? { ...p, ...updates } : p)
   })),
-  addProduct: (product) => set((state) => ({
-    products: [...state.products, { ...product, id: `p${state.products.length + 1}` }]
-  })),
+  addProduct: (product) => {
+    set((state) => ({
+      products: [...state.products, { ...product, id: `p${state.products.length + 1}` }]
+    }));
+    api.post('/products', product).catch(() => {});
+  },
 
-  // --- Transactions (Distributor Ledger) ---
-  transactions: TRANSACTIONS,
+  // ─── Notifications ───
+  markNotificationRead: (id) => {
+    set((state) => ({
+      notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
+    }));
+    api.patch(`/notifications/${id}/read`, {}).catch(() => {});
+  },
+  markAllNotificationsRead: () => {
+    set((state) => ({
+      notifications: state.notifications.map(n => ({ ...n, read: true }))
+    }));
+    const user = JSON.parse(localStorage.getItem('agripoultry_user') || '{}');
+    if (user.id) {
+      api.patch(`/notifications/read-all?userId=${user.id}`, {}).catch(() => {});
+    }
+  },
 
-  // --- Notifications ---
-  notifications: NOTIFICATIONS,
-  markNotificationRead: (id) => set((state) => ({
-    notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
-  })),
-  markAllNotificationsRead: () => set((state) => ({
-    notifications: state.notifications.map(n => ({ ...n, read: true }))
-  })),
-
-  // --- Farmer Portal ---
-  farmerPortalOrders: FARMER_PORTAL_ORDERS,
+  // ─── Farmer Portal ───
   farmerDraft: [],
   addToFarmerDraft: (item) => set((state) => {
     const existing = state.farmerDraft.find(i => i.id === item.id);
@@ -100,22 +213,42 @@ export const useStore = create((set, get) => ({
     farmerDraft: state.farmerDraft.filter(i => i.id !== itemId)
   })),
   clearFarmerDraft: () => set({ farmerDraft: [] }),
-  submitFarmerDraft: (farmerId, farmerName) => set((state) => {
-    const fId = farmerId || 'F001';
-    const totalValue = state.farmerDraft.reduce((acc, item) => acc + ((item.farmerPrices?.[fId] || item.suggestedFarmerPrice || item.distributorPrice || item.unitPrice || 0) * item.qty), 0);
-    const newOrder = {
-      id: `FPO-${3000 + state.farmerPortalOrders.length + 1}`,
-      farmerId: fId,
-      date: new Date().toISOString().split('T')[0],
-      items: state.farmerDraft.map(i => ({ product: i.name, qty: i.qty, price: (i.farmerPrices?.[fId] || i.suggestedFarmerPrice || i.distributorPrice || i.unitPrice || 0) })),
-      totalValue: totalValue,
-      status: 'Pending',
-    };
-    // Note: In an ideal app, this order would also sync back into the `farmerOrders` (Distributor bucket)
-    // using addFarmerOrder, but since they have different data structures in the mock, we manage them independently for UI demonstration.
-    return {
-      farmerDraft: [],
-      farmerPortalOrders: [newOrder, ...state.farmerPortalOrders],
-    };
-  }),
+  submitFarmerDraft: async (farmerId, farmerName) => {
+    const state = get();
+    const user = JSON.parse(localStorage.getItem('agripoultry_user') || '{}');
+
+    // FarmerPortalOrder uses frontend-style code like "F006"
+    const farmerIdCode = farmerId || user.id || 'F001';
+
+    // Clear draft immediately for snappy UI
+    set({ farmerDraft: [] });
+    
+    const items = state.farmerDraft.map((item) => {
+      const unitPrice =
+        item.farmerPrices?.[farmerIdCode] ||
+        item.suggestedFarmerPrice ||
+        item.distributorPrice ||
+        item.unitPrice ||
+        0;
+      return {
+        product: item.name,
+        qty: item.qty,
+        price: unitPrice
+      };
+    });
+
+    const totalValue = items.reduce((acc, it) => acc + ((it.price || 0) * (it.qty || 0)), 0);
+
+    try {
+      const payload = {
+        farmerId: farmerIdCode,
+        totalValue,
+        items
+      };
+      const saved = await api.post('/farmer-portal-orders', payload);
+      set(s => ({ farmerOrders: [saved, ...s.farmerOrders] }));
+    } catch (err) {
+      console.error('Failed to save grouped farmer order:', err);
+    }
+  },
 }));

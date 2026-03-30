@@ -171,6 +171,20 @@ export default function FarmerOrders() {
                   <div className="flex justify-between text-sm"><span className="text-gray-500">Quantity</span><span className="font-medium">{viewOrder.qty}</span></div>
                   <div className="flex justify-between text-sm"><span className="text-gray-500">Unit Price</span><span className="font-medium">{formatCurrencyFull(viewOrder.unitPrice || 0)}</span></div>
                   <div className="flex justify-between text-sm border-t pt-2 border-gray-200 dark:border-gray-600"><span className="font-semibold text-gray-800 dark:text-gray-200">Total</span><span className="font-bold text-green-600">{formatCurrencyFull(viewOrder.amount)}</span></div>
+
+                  {viewOrder.items?.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ordered Items</h4>
+                      <div className="space-y-2">
+                        {viewOrder.items.map((it, idx) => (
+                          <div key={idx} className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-300">{it.qty}x {it.product}</span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrencyFull((it.price || 0) * (it.qty || 0))}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {/* Timeline */}
                 <div className="space-y-2">

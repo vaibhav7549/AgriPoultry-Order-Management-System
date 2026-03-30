@@ -4,14 +4,16 @@ import { useStore } from '../../lib/store';
 import { User, MapPin, Lock, Save, Camera, History, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
+import api from '../../lib/api';
 
 export default function FarmerProfile() {
-  const { currentUser } = useAuth();
+  const { currentUser, updateProfile } = useAuth();
   const { addToast } = useToast();
-  const { farmerPortalOrders } = useStore();
+  const { farmerOrders } = useStore();
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [security, setSecurity] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
   // Form State
   const [form, setForm] = useState({
@@ -29,8 +31,33 @@ export default function FarmerProfile() {
 
   const handleSave = (e) => {
     e.preventDefault();
+    if (!currentUser?.userId) return;
+
+    if (activeTab === 'security') {
+      if (security.newPassword.length < 8) {
+        addToast('Password must be at least 8 characters', 'error');
+        return;
+      }
+      if (security.newPassword !== security.confirmPassword) {
+        addToast('Passwords do not match', 'error');
+        return;
+      }
+
+      setSaving(true);
+      api.patch(`/users/${currentUser.userId}/change-password`, {
+        currentPassword: security.currentPassword,
+        newPassword: security.newPassword
+      }).then(() => {
+        addToast('Password changed successfully', 'success');
+        setSecurity({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      }).catch(() => {
+        addToast('Current password is incorrect', 'error');
+      }).finally(() => setSaving(false));
+      return;
+    }
+
     setSaving(true);
-    // Simulate API save
+    updateProfile(form);
     setTimeout(() => {
       setSaving(false);
       addToast('Profile updated successfully', 'success');
@@ -152,15 +179,33 @@ export default function FarmerProfile() {
                 <div className="max-w-md space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
-                    <input type="password" placeholder="••••••••" className="input-base" />
+                    <input
+                      type="password"
+                      value={security.currentPassword}
+                      onChange={e => setSecurity(s => ({ ...s, currentPassword: e.target.value }))}
+                      placeholder="••••••••"
+                      className="input-base"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
-                    <input type="password" placeholder="New password" className="input-base" />
+                    <input
+                      type="password"
+                      value={security.newPassword}
+                      onChange={e => setSecurity(s => ({ ...s, newPassword: e.target.value }))}
+                      placeholder="New password"
+                      className="input-base"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
-                    <input type="password" placeholder="Confirm new password" className="input-base" />
+                    <input
+                      type="password"
+                      value={security.confirmPassword}
+                      onChange={e => setSecurity(s => ({ ...s, confirmPassword: e.target.value }))}
+                      placeholder="Confirm new password"
+                      className="input-base"
+                    />
                   </div>
                   <div className="pt-2">
                     <button type="button" className="text-sm text-green-600 dark:text-green-400 font-medium hover:underline">Forgot your password?</button>
@@ -172,7 +217,7 @@ export default function FarmerProfile() {
                 <div className="space-y-6">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Recent Orders Activity</h3>
                   <div className="relative border-l-2 border-green-200 dark:border-green-900/50 pl-5 space-y-6 ml-2">
-                    {farmerPortalOrders?.slice(0, 5).map(order => (
+                    {farmerOrders?.slice(0, 5).map(order => (
                       <div key={order.id} className="relative">
                         <div className="absolute -left-[29px] w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 border-4 border-white dark:border-gray-800 flex items-center justify-center text-green-600 dark:text-green-400">
                           <Package size={10} />
@@ -196,7 +241,7 @@ export default function FarmerProfile() {
                         </div>
                       </div>
                     ))}
-                    {!farmerPortalOrders?.length && (
+                    {!farmerOrders?.length && (
                       <p className="text-gray-500 text-sm">No recent orders found.</p>
                     )}
                   </div>
@@ -205,7 +250,7 @@ export default function FarmerProfile() {
 
               <div className="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end">
                 <button type="submit" disabled={saving} className="btn-primary py-2.5 px-6 flex items-center justify-center gap-2 min-w-[140px] shadow-md shadow-green-500/20">
-                  {saving ? <div className="spinner w-4 h-4 border-2"></div> : <><Save size={18} /> Save Changes</>}
+                  {saving ? <div className="spinner w-4 h-4 border-2"></div> : <><Save size={18} /> {activeTab === 'security' ? 'Update Password' : 'Save Changes'}</>}
                 </button>
               </div>
             </form>

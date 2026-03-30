@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { Bell, Globe, Phone, ShieldAlert, Smartphone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../lib/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function FarmerSettings() {
   const { addToast } = useToast();
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
   
   const [settings, setSettings] = useState({
     pushNotifications: true,
@@ -17,6 +22,21 @@ export default function FarmerSettings() {
 
   const saveSettings = () => {
     addToast('Preferences saved successfully', 'success');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser?.userId) return;
+    const ok = window.confirm('Delete your account permanently? This will also delete your order history.');
+    if (!ok) return;
+
+    try {
+      await api.del(`/users/${currentUser.userId}`);
+      addToast('Account deleted successfully', 'success');
+      logout();
+      navigate('/login');
+    } catch {
+      addToast('Failed to delete account', 'error');
+    }
   };
 
   const Toggle = ({ label, desc, checked, onChange }) => (
@@ -74,10 +94,10 @@ export default function FarmerSettings() {
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">These actions are permanent and cannot be undone. Proceed with caution.</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="px-4 py-2 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors">
+            <button onClick={handleDeleteAccount} className="px-4 py-2 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium transition-colors">
               Deactivate Account
             </button>
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors shadow-sm">
+            <button onClick={handleDeleteAccount} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors shadow-sm">
               Delete Account Permanently
             </button>
           </div>

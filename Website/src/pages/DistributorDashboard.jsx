@@ -17,12 +17,60 @@ const ORDER_STATUS_DATA = [
 export default function DistributorDashboard() {
   const { currentUser } = useAuth();
   const farmerOrders = useStore(s => s.farmerOrders);
+  const farmers = useStore(s => s.farmers);
+  const bulkOrderHistory = useStore(s => s.bulkOrderHistory);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
 
-  const pendingOrders = farmerOrders.filter(o => o.status === 'Pending').length;
+  const pendingOrders = farmerOrders.filter(o => o.status === 'Pending' || o.status === 'Processing').length;
+  
+  // Dynamic Metrics
+  const farmersManagedCount = farmers.length;
+  
+  const revenue = farmerOrders
+    .filter(o => o.status === 'Delivered')
+    .reduce((acc, o) => acc + (o.amount || 0), 0);
+  
+  const dueToCompany = bulkOrderHistory
+    .filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled')
+    .reduce((acc, o) => acc + (o.totalValue || 0), 0);
+    
+  // Weekly Activity Chart
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().split('T')[0];
+  });
+
+  const dynamicWeeklyActivity = last7Days.map(date => {
+    const dayOrders = farmerOrders.filter(o => o.date === date);
+    const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });
+    return {
+      name: dayName,
+      orders: dayOrders.length,
+      revenue: dayOrders.reduce((acc, o) => acc + (o.amount || 0), 0)
+    };
+  });
+  
+  // Order Status Chart
+  const statusCounts = farmerOrders.reduce((acc, o) => {
+    acc[o.status] = (acc[o.status] || 0) + 1;
+    return acc;
+  }, {});
+  
+  const dynamicOrderStatusData = [
+    { name: 'Pending', value: statusCounts['Pending'] || 0, color: '#f59e0b' },
+    { name: 'Processing', value: statusCounts['Processing'] || 0, color: '#3b82f6' },
+    { name: 'Shipped', value: statusCounts['Shipped'] || 0, color: '#8b5cf6' },
+    { name: 'Delivered', value: statusCounts['Delivered'] || 0, color: '#22c55e' },
+    { name: 'Cancelled', value: statusCounts['Cancelled'] || 0, color: '#ef4444' }
+  ].filter(d => d.value > 0);
+  
+  if (dynamicOrderStatusData.length === 0) {
+    dynamicOrderStatusData.push({ name: 'No Orders', value: 1, color: '#e2e8f0' });
+  }
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -65,7 +113,7 @@ export default function DistributorDashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Farmers Managed</p>
-              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">124</h3>
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{farmersManagedCount}</h3>
             </div>
             <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400"><Users size={22} /></div>
           </div>
@@ -86,8 +134,8 @@ export default function DistributorDashboard() {
         <motion.div variants={itemVariants} onClick={() => navigate('/ledger')} className="card-static p-5 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Monthly Revenue</p>
-              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">₹1.2M</h3>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Revenue</p>
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrencyFull(revenue)}</h3>
             </div>
             <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400"><IndianRupee size={22} /></div>
           </div>
@@ -98,7 +146,7 @@ export default function DistributorDashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Due to Company</p>
-              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">₹450K</h3>
+              <h3 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrencyFull(dueToCompany)}</h3>
             </div>
             <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400"><FileText size={22} /></div>
           </div>
@@ -112,7 +160,7 @@ export default function DistributorDashboard() {
           <h2 className="text-lg font-heading font-semibold text-gray-900 dark:text-white mb-4">Recent Activity (Last 7 Days)</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={WEEKLY_ACTIVITY} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <LineChart data={dynamicWeeklyActivity} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                 <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
@@ -130,8 +178,8 @@ export default function DistributorDashboard() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={ORDER_STATUS_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                  {ORDER_STATUS_DATA.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
+                <Pie data={dynamicOrderStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                  {dynamicOrderStatusData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
                 </Pie>
                 <Tooltip />
                 <Legend />

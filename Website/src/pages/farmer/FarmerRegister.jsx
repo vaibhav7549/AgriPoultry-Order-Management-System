@@ -100,6 +100,8 @@ export default function FarmerRegister() {
       name: form.name, phone: form.phone, email: form.email, 
       dob: form.dob, username: form.username,
       village: form.village, taluka: form.taluka, district: form.district, state: form.state,
+      farmSize: form.farmSize,
+      interests: form.interests,
       assignedDistributorId: form.assignedDistributorId,
       assignedDistributorName: assignedDist ? assignedDist.name : 'Unknown Distributor',
       password: form.password,
@@ -107,6 +109,9 @@ export default function FarmerRegister() {
     });
 
     if (result.success) {
+      if (result.username) {
+        addToast(`Account created. Your username: ${result.username}`, 'success');
+      }
       setIsSuccess(true);
     } else {
       addToast(result.error, 'error');

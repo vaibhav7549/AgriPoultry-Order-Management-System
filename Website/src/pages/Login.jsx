@@ -32,7 +32,7 @@ export default function Login() {
 
     setLoading(true);
     setTimeout(() => {
-      const result = login(identifier.trim(), password, role);
+      const result = login(identifier.trim(), password, role, rememberMe);
       setLoading(false);
       if (result.success) {
         addToast(`Welcome back, ${result.user.name}!`, 'success');

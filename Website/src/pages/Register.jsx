@@ -92,7 +92,10 @@ export default function Register() {
     });
 
     if (result.success) {
-      addToast('Account created! Redirecting to login...', 'success');
+      addToast(
+        result.username ? `Account created! Your username: ${result.username}. Redirecting to login...` : 'Account created! Redirecting to login...',
+        'success'
+      );
       setTimeout(() => navigate('/login'), 2000);
     } else {
       addToast(result.error, 'error');
