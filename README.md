@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**A full-stack digital platform that streamlines the poultry supply chain — connecting Farmers, Distributors, and Companies through a unified web dashboard and powerful REST API.**
+**A full-stack digital platform that streamlines the poultry supply chain connecting Farmers, Distributors, and Companies through a unified web dashboard and powerful REST API.**
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net)
@@ -80,7 +80,7 @@
 | Component | Technology |
 |-----------|-----------|
 | **Framework** | Spring Boot 3.5 |
-| **Language** | Java 17 |
+| **Language** | Java 21 |
 | **ORM** | Spring Data JPA / Hibernate |
 | **Database** | MySQL 8.x |
 | **Build Tool** | Maven (wrapper included) |
@@ -187,7 +187,7 @@ AgriPoultry-Order-Management-System/
 
 | Tool | Version | Download |
 |------|---------|----------|
-| **Java** | 17+ | [adoptium.net](https://adoptium.net) |
+| **Java** | 21+ | [adoptium.net](https://adoptium.net) |
 | **Node.js** | 18+ | [nodejs.org](https://nodejs.org/) |
 | **npm** | 9+ | Comes with Node.js |
 | **MySQL** | 8.x | [mysql.com](https://dev.mysql.com/downloads/) |
