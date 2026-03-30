@@ -138,7 +138,11 @@ npm run lint
 
 ## 🔐 Demo Credentials
 
-The app currently uses dummy authentication for demonstration purposes via the `mockData.js` context state.
+The app uses real authentication from the backend (`/api/auth/login`).
+
+- Farmers can login using **username OR 10-digit phone number**
+- Passwords are stored as **plaintext** (no hashing) and checked **case-sensitively**
+- “Remember me” is handled on the frontend using `localStorage`
 
 ### 👨‍🌾 Farmer Portal
 | Username | Password |
@@ -189,19 +193,19 @@ cd AgriPoultry-Order-Management-System/Backend
 ```
 
 **2. Set up the database**
+1. Start MySQL and create the database:
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS AGRI_POULTRY;"
-mysql -u root -p AGRI_POULTRY < ../schema.sql
 ```
 
-**3. Create your local properties file**
-```bash
-cp src/main/resources/application-local.properties.axample src/main/resources/application-local.properties
-```
-Then open `application-local.properties` and fill in your own MySQL credentials:
+2. (Optional) You can import `schema.sql`, but the app is also configured with:
+`spring.jpa.hibernate.ddl-auto=update` (MySQL profile), so Hibernate will create/update tables as needed.
+
+**3. Configure MySQL credentials**
+Edit `Backend/src/main/resources/application-mysql.properties` (or set env vars `DB_USERNAME` and `DB_PASSWORD`):
 ```properties
-spring.datasource.username=root
-spring.datasource.password=YOUR_PASSWORD_HERE
+spring.datasource.username=${DB_USERNAME:root}
+spring.datasource.password=${DB_PASSWORD:vaibhav}
 ```
 
 **4. Run the backend**
@@ -213,27 +217,18 @@ spring.datasource.password=YOUR_PASSWORD_HERE
 
 Open browser and go to:
 ```
-http://localhost:8080/api/users
+http://localhost:8085/api/users
 ```
 You should see `[]` — empty array means connected successfully.
 
 ### ⚠️ Important
 - Never commit `application-local.properties` — it's in `.gitignore`
 - Each teammate uses their own local MySQL credentials
-- Backend runs on port `8080`, React frontend on port `5173`
+- Backend runs on port `8085`, React frontend on port `5173`
 
-1. Java version — they need Java 21. On Ubuntu:
-sudo apt install openjdk-21-jdk
-export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-export PATH=$JAVA_HOME/bin:$PATH
-
-2. Solving MySQL Auth issue
-sudo mysql
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'theirpassword';
-FLUSH PRIVILEGES;
-exit;
-
-3. The application-local.properties file — they must create it themselves from the example file. It will never come from GitHub.
+If you get DB connection errors:
+- Update `Backend/src/main/resources/application-mysql.properties` or set `DB_USERNAME` / `DB_PASSWORD`.
+- The app runs with the MySQL profile and uses Hibernate `ddl-auto=update` to keep tables in sync.
 
 
 ## 👥 Team
