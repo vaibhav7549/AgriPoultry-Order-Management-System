@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**A full-stack digital platform that streamlines the poultry supply chain — connecting Farmers, Distributors, and Companies through a unified web dashboard and powerful REST API.**
+**A full-stack digital platform that streamlines the poultry supply chain connecting Farmers, Distributors, and Companies through a unified web dashboard and powerful REST API.**
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)](https://adoptium.net)
