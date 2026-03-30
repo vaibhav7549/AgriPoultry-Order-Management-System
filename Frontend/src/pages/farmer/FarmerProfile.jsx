@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../lib/store';
-import { User, MapPin, Lock, Save, Camera, History, Package } from 'lucide-react';
+import { User, MapPin, Lock, Save, Camera, History, Package, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
 import api from '../../lib/api';
@@ -14,6 +14,7 @@ export default function FarmerProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [security, setSecurity] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [showSecurityPassword, setShowSecurityPassword] = useState(false);
 
   // Form State
   const [form, setForm] = useState({
@@ -179,33 +180,63 @@ export default function FarmerProfile() {
                 <div className="max-w-md space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
-                    <input
-                      type="password"
-                      value={security.currentPassword}
-                      onChange={e => setSecurity(s => ({ ...s, currentPassword: e.target.value }))}
-                      placeholder="••••••••"
-                      className="input-base"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showSecurityPassword ? 'text' : 'password'}
+                        value={security.currentPassword}
+                        onChange={e => setSecurity(s => ({ ...s, currentPassword: e.target.value }))}
+                        placeholder="••••••••"
+                        className="input-base pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSecurityPassword(!showSecurityPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        aria-label={showSecurityPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showSecurityPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
-                    <input
-                      type="password"
-                      value={security.newPassword}
-                      onChange={e => setSecurity(s => ({ ...s, newPassword: e.target.value }))}
-                      placeholder="New password"
-                      className="input-base"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showSecurityPassword ? 'text' : 'password'}
+                        value={security.newPassword}
+                        onChange={e => setSecurity(s => ({ ...s, newPassword: e.target.value }))}
+                        placeholder="New password"
+                        className="input-base pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSecurityPassword(!showSecurityPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        aria-label={showSecurityPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showSecurityPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={security.confirmPassword}
-                      onChange={e => setSecurity(s => ({ ...s, confirmPassword: e.target.value }))}
-                      placeholder="Confirm new password"
-                      className="input-base"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showSecurityPassword ? 'text' : 'password'}
+                        value={security.confirmPassword}
+                        onChange={e => setSecurity(s => ({ ...s, confirmPassword: e.target.value }))}
+                        placeholder="Confirm new password"
+                        className="input-base pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSecurityPassword(!showSecurityPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        aria-label={showSecurityPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showSecurityPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="pt-2">
                     <button type="button" className="text-sm text-green-600 dark:text-green-400 font-medium hover:underline">Forgot your password?</button>

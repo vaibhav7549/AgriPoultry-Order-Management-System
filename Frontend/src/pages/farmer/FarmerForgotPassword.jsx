@@ -178,7 +178,12 @@ export default function FarmerForgotPassword() {
                         ))}
                       </div>
                     )}
-                    <input type="password" value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setError(''); }} className={`input-base mt-4 ${error ? 'border-red-500' : ''}`} placeholder="Confirm new password" />
+                    <div className="relative mt-4">
+                      <input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => { setConfirmPassword(e.target.value); setError(''); }} className={`input-base pr-10 ${error ? 'border-red-500' : ''}`} placeholder="Confirm new password" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                     {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                     <button type="submit" className="w-full btn-primary py-2.5 mt-6">Reset Password</button>
                   </form>

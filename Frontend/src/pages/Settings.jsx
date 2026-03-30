@@ -143,10 +143,16 @@ export default function Settings() {
                 <form onSubmit={handleChangePassword} className="space-y-3 max-w-sm">
                   <div className="relative">
                     <input type={showPw ? 'text' : 'password'} value={passwords.current} onChange={e => setPasswords(p => ({ ...p, current: e.target.value }))} className="input-base text-sm pr-10" placeholder="Current password" />
-                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" aria-label={showPw ? 'Hide password' : 'Show password'}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                   </div>
-                  <input type="password" value={passwords.new_} onChange={e => setPasswords(p => ({ ...p, new_: e.target.value }))} className="input-base text-sm" placeholder="New password" />
-                  <input type="password" value={passwords.confirm} onChange={e => setPasswords(p => ({ ...p, confirm: e.target.value }))} className="input-base text-sm" placeholder="Confirm new password" />
+                  <div className="relative">
+                    <input type={showPw ? 'text' : 'password'} value={passwords.new_} onChange={e => setPasswords(p => ({ ...p, new_: e.target.value }))} className="input-base text-sm pr-10" placeholder="New password" />
+                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" aria-label={showPw ? 'Hide password' : 'Show password'}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                  </div>
+                  <div className="relative">
+                    <input type={showPw ? 'text' : 'password'} value={passwords.confirm} onChange={e => setPasswords(p => ({ ...p, confirm: e.target.value }))} className="input-base text-sm pr-10" placeholder="Confirm new password" />
+                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" aria-label={showPw ? 'Hide password' : 'Show password'}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                  </div>
                   <button type="submit" className="btn-primary text-sm">Update Password</button>
                 </form>
               </div>
