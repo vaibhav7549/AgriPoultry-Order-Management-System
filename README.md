@@ -95,14 +95,13 @@ cd AgriPoultry-Order-Management-System
 ### 2. Database Setup
 
 1. Start your MySQL server.
-2. Create the database and import the schema:
+2. Create the database:
 
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS AGRI_POULTRY;"
-mysql -u root -p AGRI_POULTRY < schema.sql
 ```
 
-> **Note:** The `schema.sql` file creates all required tables — `users`, `products`, `sales`, `sale_items`, `purchases`, `ledger`, and `farmer_payments`.
+Hibernate will create/update tables automatically using the MySQL profile (`spring.jpa.hibernate.ddl-auto=update`).
 
 ---
 
@@ -120,6 +119,8 @@ npm run dev
 ```
 
 The dashboard will be available at **http://localhost:5173** (default Vite port).
+
+Frontend proxies all `/api` calls to the backend at `http://localhost:8085`.
 
 #### Other useful commands
 
@@ -198,8 +199,7 @@ cd AgriPoultry-Order-Management-System/Backend
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS AGRI_POULTRY;"
 ```
 
-2. (Optional) You can import `schema.sql`, but the app is also configured with:
-`spring.jpa.hibernate.ddl-auto=update` (MySQL profile), so Hibernate will create/update tables as needed.
+2. Tables are created/updated automatically on startup using Hibernate `ddl-auto=update` (MySQL profile).
 
 **3. Configure MySQL credentials**
 Edit `Backend/src/main/resources/application-mysql.properties` (or set env vars `DB_USERNAME` and `DB_PASSWORD`):
@@ -222,7 +222,7 @@ http://localhost:8085/api/users
 You should see `[]` — empty array means connected successfully.
 
 ### ⚠️ Important
-- Never commit `application-local.properties` — it's in `.gitignore`
+- Never commit your MySQL credentials (for example `DB_PASSWORD` / `.env` / local property overrides)
 - Each teammate uses their own local MySQL credentials
 - Backend runs on port `8085`, React frontend on port `5173`
 
