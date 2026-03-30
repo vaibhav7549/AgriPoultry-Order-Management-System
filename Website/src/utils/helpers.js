@@ -31,6 +31,7 @@ export function formatDate(dateStr) {
 /** Get status badge CSS class */
 export function getStatusColor(status) {
   const s = (status || '').toLowerCase();
+  if (s === 'new orders' || s === 'new order') return 'badge-pending';
   if (s === 'pending') return 'badge-pending';
   if (s === 'processing') return 'badge-processing';
   if (s === 'shipped') return 'badge-shipped';

@@ -17,8 +17,13 @@ function DataHydrator() {
       if (currentUser.role === 'distributor') {
         store.fetchFarmerOrders({ distributorId: dbId });
         store.fetchBulkOrders(userId);
+        store.fetchPurchases({ distributorId: dbId });
+        store.fetchLedgerEntries(dbId);
+        store.fetchInvoices();
       } else if (currentUser.role === 'company') {
         store.fetchBulkOrders();
+        store.fetchPurchases({ companyId: dbId });
+        store.fetchInvoices();
       } else if (currentUser.role === 'farmer') {
         store.fetchFarmerOrders({ farmerId: dbId });
       }
@@ -32,10 +37,15 @@ function DataHydrator() {
       store.fetchBulkOrders(userId);
       store.fetchTransactions(userId);
       store.fetchNotifications(userId);
+      store.fetchPurchases({ distributorId: dbId });
+      store.fetchLedgerEntries(dbId);
+      store.fetchInvoices();
     } else if (currentUser.role === 'company') {
       store.fetchBulkOrders();
       store.fetchProducts();
       store.fetchNotifications(userId);
+      store.fetchPurchases({ companyId: dbId });
+      store.fetchInvoices();
     } else if (currentUser.role === 'farmer') {
       store.fetchFarmerOrders({ farmerId: dbId });
       store.fetchProducts();

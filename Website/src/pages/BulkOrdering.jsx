@@ -5,11 +5,10 @@ import { useToast } from '../context/ToastContext';
 import { ShoppingCart, Plus, Minus, Send, X, PackageSearch, History, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrencyFull, formatDate, getStatusColor } from '../utils/helpers';
-import { PRODUCTS } from '../data/mockData';
 
 export default function BulkOrdering() {
   const { currentUser } = useAuth();
-  const { bulkDraft, addToBulkDraft, updateDraftQty, removeDraftItem, clearBulkDraft, submitBulkDraft, bulkOrderHistory } = useStore();
+  const { bulkDraft, addToBulkDraft, updateDraftQty, removeDraftItem, clearBulkDraft, submitBulkDraft, bulkOrderHistory, products } = useStore();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -30,7 +29,7 @@ export default function BulkOrdering() {
   };
 
   const handleSubmit = () => {
-    submitBulkDraft(currentUser?.name);
+    submitBulkDraft(currentUser?.name, currentUser?.id, currentUser?.phone);
     setShowConfirm(false);
     addToast('Bulk order sent to AgriPoultry Corp!', 'success');
   };
@@ -71,7 +70,7 @@ export default function BulkOrdering() {
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-custom pr-1 pb-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {PRODUCTS.filter(p => (categoryFilter === 'All' || p.category === categoryFilter) && (!searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))).map(product => {
+                {(products || []).filter(p => (categoryFilter === 'All' || p.category === categoryFilter) && (!searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase()))).map(product => {
                   const inDraft = bulkDraft.find(d => d.id === product.id);
                   return (
                     <div key={product.id} className="card-static p-4 flex flex-col justify-between group">
@@ -166,7 +165,17 @@ export default function BulkOrdering() {
                   <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <td className="py-3 px-4 text-sm font-semibold text-green-600">{order.id}</td>
                     <td className="py-3 px-4 text-sm text-gray-500">{formatDate(order.date)}</td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{order.items?.length || 0} items</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">
+                      {(order.items || []).slice(0, 2).map((i, idx) => (
+                        <span key={idx} className="inline-block mr-2">
+                          {i.product} x{i.qty}
+                        </span>
+                      ))}
+                      {order.items && order.items.length > 2 && (
+                        <span className="text-xs text-gray-500">+{order.items.length - 2} more</span>
+                      )}
+                      {!order.items || order.items.length === 0 ? '0 items' : null}
+                    </td>
                     <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">{formatCurrencyFull(order.totalValue)}</td>
                     <td className="py-3 px-4"><span className={`badge ${getStatusColor(order.status)}`}>{order.status}</span></td>
                   </tr>

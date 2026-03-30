@@ -9,6 +9,7 @@ public class PurchaseDto {
     public static class Request {
         private Integer distributorId;
         private Integer companyId;
+        private String bulkOrderId;
         private BigDecimal totalAmount;
         private BigDecimal paidAmount;
     }
@@ -20,6 +21,7 @@ public class PurchaseDto {
         private String distributorName;
         private Integer companyId;
         private String companyName;
+        private String bulkOrderId;
         private BigDecimal totalAmount;
         private BigDecimal paidAmount;
         private BigDecimal dueAmount;

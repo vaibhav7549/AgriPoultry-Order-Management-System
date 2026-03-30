@@ -30,6 +30,10 @@ public class Purchase {
     @JoinColumn(name = "company_id", nullable = false)
     private User company;
 
+    // Links this purchase payment/ledger to the original bulk order (BO-xxxx)
+    @Column(name = "bulk_order_id", length = 20)
+    private String bulkOrderId;
+
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 

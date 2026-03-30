@@ -2,12 +2,15 @@ package com.agripoultry.config;
 
 import com.agripoultry.entity.*;
 import com.agripoultry.repository.*;
+import com.agripoultry.service.LedgerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
@@ -19,27 +22,40 @@ public class DataLoader implements CommandLineRunner {
     private final ProductRepository productRepo;
     private final FarmerOrderRepository farmerOrderRepo;
     private final BulkOrderRepository bulkOrderRepo;
+    private final PurchaseRepository purchaseRepo;
     private final TransactionRepository transactionRepo;
     private final NotificationRepository notificationRepo;
     private final InvoiceRepository invoiceRepo;
     private final FarmerPortalOrderRepository farmerPortalOrderRepo;
+    private final LedgerRepository ledgerRepo;
+    private final LedgerService ledgerService;
 
     @Override
     public void run(String... args) {
-        if (userRepo.count() > 0) {
-            log.info("Database already seeded — skipping DataLoader.");
-            return;
+        boolean usersSeeded = userRepo.count() > 0;
+        if (!usersSeeded) {
+            log.info("Seeding database with dummy data...");
+            seedUsers();
+            seedProducts();
+            seedFarmerOrders();
+            seedBulkOrders();
+            seedTransactions();
+            seedNotifications();
+            seedInvoices();
+            seedFarmerPortalOrders();
+            log.info("Database seeding complete!");
+        } else {
+            log.info("Users already seeded — continuing with missing purchase/ledger seeding if needed.");
         }
-        log.info("Seeding database with dummy data...");
-        seedUsers();
-        seedProducts();
-        seedFarmerOrders();
-        seedBulkOrders();
-        seedTransactions();
-        seedNotifications();
-        seedInvoices();
-        seedFarmerPortalOrders();
-        log.info("Database seeding complete!");
+
+        // Ensure Purchase + Ledger exist for bulk orders (needed for distributor/company ledger screens).
+        if (bulkOrderRepo.count() > 0) {
+            if (purchaseRepo.count() == 0) {
+                seedPurchasesAndLedgerFromBulkOrders();
+            } else if (ledgerRepo.count() == 0) {
+                seedLedgerFromPurchases();
+            }
+        }
     }
 
     private void seedUsers() {
@@ -215,6 +231,85 @@ public class DataLoader implements CommandLineRunner {
                 .status((String)d[3]).orderId((String)d[4]).build());
         }
         log.info("Seeded 6 invoices");
+    }
+
+    @Transactional
+    private void seedPurchasesAndLedgerFromBulkOrders() {
+        List<User> companies = userRepo.findByRole(User.Role.COMPANY);
+        if (companies.isEmpty()) {
+            throw new RuntimeException("No COMPANY user found in DB.");
+        }
+        User company = companies.get(0);
+
+        Map<String, Invoice> invoiceByOrderId = new HashMap<>();
+        for (Invoice inv : invoiceRepo.findAll()) {
+            invoiceByOrderId.put(inv.getOrderId(), inv);
+        }
+
+        List<BulkOrder> bulkOrders = bulkOrderRepo.findAll();
+        for (BulkOrder bo : bulkOrders) {
+            if (bo.getDistributorIdCode() == null || bo.getOrderId() == null) continue;
+
+            Integer distributorDbId = Integer.parseInt(bo.getDistributorIdCode().replaceAll("\\D", ""));
+            User distributor = userRepo.findById(distributorDbId)
+                    .orElseThrow(() -> new RuntimeException("Distributor not found: " + distributorDbId));
+
+            Invoice inv = invoiceByOrderId.get(bo.getOrderId());
+            BigDecimal paid = BigDecimal.ZERO;
+            if (inv != null && inv.getStatus() != null && inv.getStatus().equalsIgnoreCase("Paid")) {
+                paid = inv.getAmount() != null ? inv.getAmount() : BigDecimal.ZERO;
+            }
+
+            BigDecimal total = bo.getTotalValue() != null ? bo.getTotalValue() : BigDecimal.ZERO;
+            BigDecimal due = total.subtract(paid);
+
+            Purchase purchase = Purchase.builder()
+                    .distributor(distributor)
+                    .company(company)
+                    .totalAmount(total)
+                    .paidAmount(paid)
+                    .dueAmount(due)
+                    .bulkOrderId(bo.getOrderId())
+                    .build();
+            purchaseRepo.save(purchase);
+
+            // Ensure invoice exists for BO id (needed for the Invoices tab).
+            if (inv == null) {
+                String status = paid.compareTo(BigDecimal.ZERO) > 0 ? "Paid" : "Pending";
+                invoiceRepo.save(Invoice.builder()
+                        .invoiceId("INV-" + (invoiceRepo.count() + 1001))
+                        .date(LocalDate.now().toString())
+                        .amount(total)
+                        .status(status)
+                        .orderId(bo.getOrderId())
+                        .build());
+            }
+
+            // Distributor ledger:
+            // - DEBIT for full purchase total
+            // - CREDIT for already-paid amount (if any)
+            ledgerService.recordDebit(distributor, total, Ledger.ReferenceType.PURCHASE, purchase.getPurchaseId());
+            if (paid.compareTo(BigDecimal.ZERO) > 0) {
+                ledgerService.recordCredit(distributor, paid, Ledger.ReferenceType.PAYMENT, purchase.getPurchaseId());
+            }
+        }
+        log.info("Seeded purchases + ledger entries from bulk orders");
+    }
+
+    @Transactional
+    private void seedLedgerFromPurchases() {
+        List<Purchase> purchases = purchaseRepo.findAll();
+        for (Purchase p : purchases) {
+            User distributor = p.getDistributor();
+            BigDecimal total = p.getTotalAmount() != null ? p.getTotalAmount() : BigDecimal.ZERO;
+            BigDecimal paid = p.getPaidAmount() != null ? p.getPaidAmount() : BigDecimal.ZERO;
+
+            ledgerService.recordDebit(distributor, total, Ledger.ReferenceType.PURCHASE, p.getPurchaseId());
+            if (paid.compareTo(BigDecimal.ZERO) > 0) {
+                ledgerService.recordCredit(distributor, paid, Ledger.ReferenceType.PAYMENT, p.getPurchaseId());
+            }
+        }
+        log.info("Seeded ledger entries from existing purchases");
     }
 
     private void seedFarmerPortalOrders() {

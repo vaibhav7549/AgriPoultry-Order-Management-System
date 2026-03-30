@@ -9,6 +9,9 @@ export const useStore = create((set, get) => ({
   bulkOrderHistory: [],
   kanbanOrders: [],
   products: [],
+  purchases: [],
+  ledgerEntries: [],
+  invoices: [],
   transactions: [],
   notifications: [],
   farmerPortalOrders: [],
@@ -50,6 +53,37 @@ export const useStore = create((set, get) => ({
       } else {
         set({ bulkOrderHistory: allData || [] });
       }
+    } catch { /* keep existing */ }
+  },
+
+  // ─── Purchases (bulk-order payments / distributor ledger) ───
+  fetchPurchases: async (params) => {
+    try {
+      const distributorId = params?.distributorId;
+      const companyId = params?.companyId;
+
+      let url = '/purchases';
+      if (distributorId != null) url += `?distributorId=${distributorId}`;
+      else if (companyId != null) url += `?companyId=${companyId}`;
+      else return;
+
+      const data = await api.get(url);
+      set({ purchases: data || [] });
+    } catch { /* keep existing */ }
+  },
+
+  fetchLedgerEntries: async (userId) => {
+    try {
+      if (!userId) return;
+      const data = await api.get(`/ledger/${userId}`);
+      set({ ledgerEntries: data || [] });
+    } catch { /* keep existing */ }
+  },
+
+  fetchInvoices: async () => {
+    try {
+      const data = await api.get('/invoices');
+      set({ invoices: data || [] });
     } catch { /* keep existing */ }
   },
 
@@ -123,38 +157,31 @@ export const useStore = create((set, get) => ({
     bulkDraft: state.bulkDraft.filter(i => i.id !== itemId)
   })),
   clearBulkDraft: () => set({ bulkDraft: [] }),
-  submitBulkDraft: (userName) => {
+  submitBulkDraft: (userName, distributorIdCodeOverride, contactOverride) => {
     const state = get();
     const user = JSON.parse(localStorage.getItem('agripoultry_user') || '{}');
-    const distributorIdCode = user.id || 'D001';
+    // Don't rely only on localStorage because "Remember me" can be off.
+    const distributorIdCode = distributorIdCodeOverride || user.id || 'D001';
     const newOrder = {
       distributorId: distributorIdCode,
       distributorName: userName || 'Current Distributor',
       totalValue: state.bulkDraft.reduce((acc, item) => acc + ((item.suggestedDistributorPrice || item.basePrice || 0) * item.qty), 0),
-      contact: user.phone || '9876543210',
+      contact: contactOverride || user.phone || '9876543210',
       items: state.bulkDraft.map(i => ({ product: i.name, qty: i.qty, price: (i.suggestedDistributorPrice || i.basePrice || 0) })),
     };
 
-    // Optimistic local update
-    const tempOrder = {
-      id: `BO-${2000 + state.kanbanOrders.length + 1}`,
-      ...newOrder,
-      status: 'New Orders',
-      date: new Date().toISOString().split('T')[0],
-    };
-    set({
-      bulkDraft: [],
-      kanbanOrders: [tempOrder, ...state.kanbanOrders],
-      bulkOrderHistory: [tempOrder, ...state.bulkOrderHistory],
-    });
+    // Clear draft immediately (no ID optimistic mismatch).
+    set({ bulkDraft: [] });
 
-    // Persist to backend
+    // Persist to backend (trust server-generated BO id).
     api.post('/bulk-orders', newOrder).then(saved => {
       set(s => ({
-        kanbanOrders: s.kanbanOrders.map(o => o.id === tempOrder.id ? saved : o),
-        bulkOrderHistory: s.bulkOrderHistory.map(o => o.id === tempOrder.id ? saved : o),
+        kanbanOrders: [saved, ...(s.kanbanOrders || [])],
+        bulkOrderHistory: [saved, ...(s.bulkOrderHistory || [])],
       }));
-    }).catch(() => {});
+    }).catch(() => {
+      // If API fails, do nothing (draft already cleared).
+    });
   },
 
   // ─── Kanban Orders (Company) ───
@@ -162,7 +189,11 @@ export const useStore = create((set, get) => ({
     set((state) => ({
       kanbanOrders: state.kanbanOrders.map(order =>
         order.id === orderId ? { ...order, status: newStatus } : order
-      )
+      ),
+      // If currently viewing distributor history, keep it in sync immediately.
+      bulkOrderHistory: state.bulkOrderHistory.map(order =>
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ),
     }));
     api.patch(`/bulk-orders/${orderId}/status`, { status: newStatus }).catch(() => {});
   },

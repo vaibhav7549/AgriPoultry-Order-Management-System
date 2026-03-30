@@ -40,6 +40,12 @@ public class BulkOrder {
     @Column(name = "contact", length = 20)
     private String contact;
 
+    @Column(name = "company_id", nullable = true)
+    private Integer companyId;
+
+    @Column(name = "company_name", length = 150)
+    private String companyName;
+
     @OneToMany(mappedBy = "bulkOrder", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnoreProperties("bulkOrder")
     private List<BulkOrderItem> items;

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ public class PurchaseService {
     private final PurchaseRepository purchaseRepository;
     private final UserService userService;
     private final LedgerService ledgerService;
+    private final com.agripoultry.repository.InvoiceRepository invoiceRepository;
 
     /**
      * Distributor places a bulk purchase order to a company.
@@ -51,11 +53,40 @@ public class PurchaseService {
                 .totalAmount(req.getTotalAmount())
                 .paidAmount(paid)
                 .dueAmount(due)
+                .bulkOrderId(req.getBulkOrderId())
                 .build();
         purchase = purchaseRepository.save(purchase);
 
-        // Ledger: distributor DEBITS (owes company)
-        ledgerService.recordDebit(distributor, due, Ledger.ReferenceType.PURCHASE, purchase.getPurchaseId());
+        // Ledger:
+        // - DEBIT for full purchase total (initial due)
+        // - CREDIT for any paid amount at creation time (pre-payment)
+        ledgerService.recordDebit(distributor, req.getTotalAmount(), Ledger.ReferenceType.PURCHASE, purchase.getPurchaseId());
+        if (paid.compareTo(BigDecimal.ZERO) > 0) {
+            ledgerService.recordCredit(distributor, paid, Ledger.ReferenceType.PAYMENT, purchase.getPurchaseId());
+        }
+
+        // Invoice:
+        // Keep invoice status in sync with purchase due/paid amounts.
+        if (req.getBulkOrderId() != null) {
+            String status;
+            if (due.compareTo(BigDecimal.ZERO) == 0) status = "Paid";
+            else if (paid.compareTo(BigDecimal.ZERO) > 0) status = "Partial";
+            else status = "Pending";
+
+            Invoice inv = invoiceRepository.findByOrderId(req.getBulkOrderId())
+                    .orElseGet(() -> Invoice.builder()
+                            .invoiceId("INV-" + (invoiceRepository.count() + 1001))
+                            .date(LocalDate.now().toString())
+                            .amount(req.getTotalAmount())
+                            .orderId(req.getBulkOrderId())
+                            .build());
+
+            inv.setAmount(req.getTotalAmount());
+            inv.setStatus(status);
+            inv.setOrderId(req.getBulkOrderId());
+            inv.setDate(inv.getDate() != null ? inv.getDate() : LocalDate.now().toString());
+            invoiceRepository.save(inv);
+        }
 
         return buildResponse(purchase);
     }
@@ -82,14 +113,29 @@ public class PurchaseService {
                 Ledger.ReferenceType.PAYMENT, purchaseId
         );
 
+        // Invoice status update (so the Invoices tab stays in sync).
+        if (purchase.getBulkOrderId() != null) {
+            String status;
+            if (purchase.getDueAmount().compareTo(BigDecimal.ZERO) == 0) status = "Paid";
+            else if (purchase.getPaidAmount().compareTo(BigDecimal.ZERO) > 0) status = "Partial";
+            else status = "Pending";
+
+            invoiceRepository.findByOrderId(purchase.getBulkOrderId()).ifPresent(inv -> {
+                inv.setStatus(status);
+                invoiceRepository.save(inv);
+            });
+        }
+
         return buildResponse(purchase);
     }
 
+    @Transactional(readOnly = true)
     public List<PurchaseDto.Response> getPurchasesByDistributor(Integer distributorId) {
         return purchaseRepository.findByDistributorUserId(distributorId)
                 .stream().map(this::buildResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PurchaseDto.Response> getPurchasesByCompany(Integer companyId) {
         return purchaseRepository.findByCompanyUserId(companyId)
                 .stream().map(this::buildResponse).collect(Collectors.toList());
@@ -99,6 +145,7 @@ public class PurchaseService {
         return purchaseRepository.totalDueByDistributorToCompany(distributorId, companyId);
     }
 
+    @Transactional(readOnly = true)
     public PurchaseDto.Response getPurchaseById(Integer id) {
         return buildResponse(purchaseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Purchase not found: " + id)));
@@ -111,6 +158,7 @@ public class PurchaseService {
                 .distributorName(p.getDistributor().getName())
                 .companyId(p.getCompany().getUserId())
                 .companyName(p.getCompany().getName())
+                .bulkOrderId(p.getBulkOrderId())
                 .totalAmount(p.getTotalAmount())
                 .paidAmount(p.getPaidAmount())
                 .dueAmount(p.getDueAmount())
